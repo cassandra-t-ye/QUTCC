@@ -260,4 +260,3 @@ dependencies:
   - zlib==1.2.13=h5eee18b_1
   - zstd==1.5.6=hc292b87_0
   - notebook
-prefix: /home/ty392/.conda/envs/qutcc
