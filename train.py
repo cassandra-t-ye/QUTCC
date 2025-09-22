@@ -18,9 +18,8 @@ from torchvision import transforms
 
 import datasets.fastmri.utils as fastmri_utils
 import models
-from models.ensemble import get_ensemble_dataset_split
 from datasets.bsccm import get_bsccm_dataloaders
-from datasets.denoising_fmd.data_loader import (fluore_to_tensor,
+from datasets.fmd.data_loader import (fluore_to_tensor,
                                                 load_noisy_all_loaders)
 from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
@@ -45,24 +44,19 @@ def parse_arguments():
     parser.add_argument('--data-root', type=str, help='directory to dataset root', required=True)
     parser.add_argument('--experiment-type', type=str, choices=["MRI", 
                                                                 "Denoising", 
-                                                                "QPI",
-                                                                "Lensless",
-                                                                "Motionblur", 
+                                                                "QPI", 
                                                                 "CT"], help='experiment type', required=True)
-    
-    parser.add_argument('--net', type=str, default='unet_quantile', choices=['unet', 
-                                                                             'unet_quantile', 
-                                                                             'unet_quantile10',
+
+    #Getting rid of unet, unet_quantile10, unet_ensemble, unet_dropout
+    parser.add_argument('--net', type=str, default='unet_quantile', choices=['unet_quantile',
                                                                              'unet_im2im', 
-                                                                             'im2im',
-                                                                             'unet_ensemble',
-                                                                             'unet_dropout'], )
+                                                                             'im2im'], )
     parser.add_argument('--imsize', type=int, default=256, help='image size')
-    parser.add_argument('--in-channels', type=int, default=5, help='input channels')
+    parser.add_argument('--in-channels', type=int, default=1, help='input channels')
     parser.add_argument('--out-channels', type=int, default=1, help='output channels')
     parser.add_argument('--transform', type=str, default='center_crop', choices=['four_crop', 'multi_image', 'center_crop'], help='data transform')
-    parser.add_argument('--epochs', type=int, default=400, help='number of iterations to train')
-    parser.add_argument('--batch-size', type=int, default=1, help='input batch size for training (should be 1 for all experiments for now)') # TODO: fix
+    parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train')
+    parser.add_argument('--batch-size', type=int, default=1, help='input batch size for training')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--wd', type=float, default=0., help="weight decay")
     parser.add_argument('--ckpt-freq', type=int, default=5, help='how many epochs to wait before saving model')
@@ -74,34 +68,22 @@ def parse_arguments():
     parser.add_argument('--resume', type=str, default=None, help='path to checkpoint folder or specific checkpoint file to resume from')
     parser.add_argument('--auto-resume', action='store_true', default=False, help='automatically resume from latest checkpoint in exp-dir if available')
     
-    
+    #FMD-args
     parser.add_argument('--noise-type', type=str, default="none", choices=['gaussian', 'poisson', 'real', 'none'], help='noise type')
     parser.add_argument('--noise-levels-train', type=list, default=[1], help='noise levels for training')
     parser.add_argument('--noise-levels-test', type=list, default=[1], help='noise levels for testing')
     parser.add_argument('--sigma', type=float, default = 0, help='maximum noise level for training')
-    parser.add_argument('--n-blur-samples', type=int, default=5, help='number of blur samples per image (for motion blur)')
-    parser.add_argument('--kernel-min', type=float, default=5, help='minimum kernel size (for motion blur)')
-    parser.add_argument('--kernel-max', type=float, default=20, help='maximum kernel size (for motion blur)')
-    parser.add_argument('--intensity', type=float, default=0, help='minimum intensity (for motion blur)')
-    parser.add_argument('--num-ensemble', type=int, default=1, help='number of ensemble splits for im2im models')
-    parser.add_argument('--ensemble-id', type=int, default=None, help="ensemble id for ensemble models (0 -> num_ensemble - 1)")
 
+    #CT-args
+    parser.add_argument('--ct-step-size', type=int, default=800, help='step size for CT radon transform')
+    # WandB-specific args 
+    parser.add_argument('--wandb-project', type=str, help='UQ-NET project name')
+    parser.add_argument('--wandb-entity', type=str, help='wandb entity (team/user)')
+    #Misc-args
     parser.add_argument('--debug', action='store_true', default=False, help='enable verbose stdout')
     parser.add_argument('--seed', type=int, default=42, help='random seed')
     parser.add_argument('--cuda', type=int, default=0, help='cuda device number')
     parser.add_argument('--cmap', type=str, default='inferno', help='colormap for plotting')
-
-    #ADDED FOR CT
-    parser.add_argument('--ct-step-size', type=int, default=800, help='step size for CT radon transform')
-    
-    # DDP-specific args
-    parser.add_argument('--dist-backend', type=str, default='nccl')
-    parser.add_argument('--dist-url', type=str, default='tcp://127.0.0.1:29500')
-
-    # WandB-specific args 
-    parser.add_argument('--wandb-project', type=str, default='quantile-uqnet', help='UQ-NET project name')
-    parser.add_argument('--wandb-entity', type=str, default="cassye-cornell-university", help='wandb entity (team/user)')
-
     return parser.parse_args()
 
 def setup_experiment(args):
@@ -134,10 +116,6 @@ def setup_experiment(args):
         args.run_dir = f"{args.exp_dir}/{args.exp_name}/" \
                        f"{args.net}_epochs{args.epochs}_bs{args.batch_size}" \
                        f"_{time.strftime('%Y-%m-%d-%H.%M.%S')}"
-        if args.net == "unet_ensemble" and args.ensemble_id is not None:
-            args.run_dir = f"{args.exp_dir}/{args.exp_name}/" \
-                           f"{args.net}_epochs{args.epochs}_bs{args.batch_size}" \
-                           f"/{args.ensemble_id}"
         shutil.rmtree(args.run_dir, ignore_errors=True)
     
     args.ckpt_dir = args.run_dir + '/checkpoints'
@@ -187,8 +165,6 @@ def get_dataloaders(args, transform):
         train_size = int(0.9 * len(train_dataset))
         test_size = len(train_dataset) - train_size
         train_dataset, test_dataset = random_split(train_dataset, [train_size, test_size])
-        if args.net == 'unet_ensemble' and args.ensemble_id is not None:
-            train_dataset = get_ensemble_dataset_split(train_dataset, args.num_ensemble, args.ensemble_id, seed=args.seed)
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True, persistent_workers=True)
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True, persistent_workers=True)
         print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)}")
@@ -295,15 +271,7 @@ def calculate_output_and_loss(model, net_type, noisy, clean, pinball_05, pinball
     denoised, loss = None, None
     # print(f"noisy shape: {noisy.shape}, clean shape: {clean.shape}")
 
-    if net_type in ['unet', 'unet_ensemble', 'unet_dropout']:
-        timevect = torch.full((batch_size,), 0.5, device=device, dtype=torch.float32)
-        if net_type == 'unet_dropout':
-            pred = denoised = model(noisy, timevect, num_samples=1, reduce=True)
-        else:
-            pred = denoised = model(noisy, timevect)
-        loss = F.mse_loss(pred, clean, reduction='mean')
-
-    elif net_type in ['unet_quantile', 'unet_quantile10']:
+    if net_type in ['unet_quantile']:
         curr_quantiles = torch.rand(batch_size, device=device, dtype=torch.float32)
         curr_quantiles[curr_quantiles == 0] = 1e-7
         pred = denoised = model(noisy, curr_quantiles)
@@ -380,11 +348,8 @@ def evaluate(model, test_loader, epoch, args, pinball_05, pinball_95, pinball, d
         
             pred = None
             denoised = None
-            if args.net in ['unet', 'unet_ensemble']:
-                timevect = torch.full((batch_size,), 0.5, device=device, dtype=torch.float32)
-                pred = denoised = model(noisy, timevect)
-                loss = F.mse_loss(pred, clean, reduction='mean')
-            elif args.net in ['unet_quantile', 'unet_quantile10']:
+
+            if args.net in ['unet_quantile']:
                 curr_quantile = torch.full((batch_size,), 0.5, device=device, dtype=torch.float32)
                 pred = denoised = model(noisy, curr_quantile)
                 loss = F.mse_loss(pred, clean, reduction='mean')
@@ -399,11 +364,7 @@ def evaluate(model, test_loader, epoch, args, pinball_05, pinball_95, pinball, d
                 pred = denoised[:,1:2, :, :]
                 loss = F.mse_loss(pred, clean, reduction='mean') \
                     + pinball_05(denoised[:,0:1, :, :], clean) + pinball_95(denoised[:,2:, :, :], clean)
-            elif args.net == 'unet_dropout':
-                timevect = torch.full((batch_size,), 0.5, device=device, dtype=torch.float32)
-                pred = denoised = model(noisy, timevect, num_samples=1, reduce=True)
-                loss = F.mse_loss(pred, clean, reduction='mean')
-            
+ 
             epoch_mse += loss.item()
             epoch_psnr += cal_psnr(clean, pred).item()
             epoch_ssim += cal_ssim2(clean, pred).item()
@@ -479,16 +440,6 @@ def main(args):
     setup_experiment(args)
 
     wandb_name = f"{args.exp_name}-{args.net}-bs{args.batch_size}"
-    if args.ensemble_id is not None:
-        wandb_name += f"-ensemble{args.ensemble_id}"
-    wandb_name += f"-{time.strftime('%Y%m%d-%H%M%S')}"
-    wandb.init(
-        project=args.wandb_project,
-        entity=args.wandb_entity,
-        name=wandb_name,
-        config=vars(args)
-    )
-
     device = torch.device(f'cuda:{args.cuda}' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
