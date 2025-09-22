@@ -32,13 +32,13 @@ ROOT = "/share/monakhova/Cassandra_data/UQNet_proj"
 # ROOT = "/scratch2/UQNet_proj"
 
 BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
-                          "im2im_root": "im2im_epochs20_bs16_2025-06-24-20.58.31",
-                          "im2im_epoch": 20,
+                          "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.51.54",
+                          "im2im_epoch": 35,
                         #   "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-01.11.24",
-                          "quantile_root": "unet_quantile_epochs50_bs4_2025-05-19-10.11.52",
-                          "quantile_epoch": 20,
                           "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-04.33.21",
                           "unet_im2im_epoch": 15,
+                          "quantile_root": "unet_quantile_epochs50_bs4_2025-05-19-10.11.52",
+                          "quantile_epoch": 20,
                           "min_noise": 0,
                           "max_noise": 0.5,
                           "num_noise": 40,
@@ -48,78 +48,96 @@ BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
                           "batch_size": 20,
                           "experiments_folder": ROOT + "/experiments"},
             "poisson": {"experiment_type": "poisson",
-                          "quantile_root": "unet_quantile_epochs50_bs4_2025-06-29-20.06.00",
-                          "quantile_epoch": 35,
-                          "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-06-29-21.40.35",
-                          "unet_im2im_epoch": 10,
-                          "min_noise": 50,
-                          "max_noise": 100,
-                          "num_noise": 40,
-                          "calib_data_path": ROOT + "/Denoising_FMD/calibration",
-                          "test_data_path": ROOT + "/Denoising_FMD/validation",
-                          "in_channels": 1,
-                          "batch_size": 20,
-                          "experiments_folder": ROOT + "/experiments"},              
+                        "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.52.03",
+                        "im2im_epoch": 44,
+                        "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-06-29-21.40.35",
+                        "unet_im2im_epoch": 10,
+                        "quantile_root": "unet_quantile_epochs50_bs4_2025-06-29-20.06.00",
+                        "quantile_epoch": 35,
+                        "min_noise": 50,
+                        "max_noise": 100,
+                        "num_noise": 40,
+                        "calib_data_path": ROOT + "/Denoising_FMD/calibration",
+                        "test_data_path": ROOT + "/Denoising_FMD/validation",
+                        "in_channels": 1,
+                        "batch_size": 20,
+                        "experiments_folder": ROOT + "/experiments"},              
             "real_noise_mice": {"experiment_type": "real_noise",
-                          "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-20.30.31_mice",
-                          "quantile_epoch": 10,
+                                "im2im_root": "im2im_epochs100_bs4_2025-07-05-22.51.09_mice",
+                                "im2im_epoch": 35,
                           "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-20.30.31_mice",
                           "unet_im2im_epoch": 5,
+                          "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-20.30.31_mice",
+                          "quantile_epoch": 10,
                           "calib_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_MICE/calib_MICE",
                           "test_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_MICE/val_MICE",
                           "in_channels": 1,
                           "batch_size": 20,
                           "experiments_folder": ROOT + "/experiments"},
-            "real_noise_bpae": {"experiment_type": "real_noise",
-                          "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-20.30.31_bpae",
-                          "quantile_epoch": 10,
-                          "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-20.30.31_bpae",
-                          "unet_im2im_epoch": 5,
-                          "calib_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_BPAE_G/calib_BPAE_G",
-                          "test_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_BPAE_G/val_BPAE_G",
-                          "in_channels": 1,
-                          "batch_size": 20,
-                          "experiments_folder": ROOT + "/experiments"},
+            # "real_noise_bpae": {"experiment_type": "real_noise",
+            #               "im2im_root": "im2im_epochs100_bs4_2025-07-05-22.51.09_bpae",
+            #               "im2im_epoch": 35,
+            #               "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-20.30.31_bpae",
+            #               "unet_im2im_epoch": 5,
+            #               "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-20.30.31_bpae",
+            #               "quantile_epoch": 10,
+            #               "calib_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_BPAE_G/calib_BPAE_G",
+            #               "test_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_BPAE_G/val_BPAE_G",
+            #               "in_channels": 1,
+            #               "batch_size": 20,
+            #               "experiments_folder": ROOT + "/experiments"},
              "mri": {"experiment_type": "mri",
-                     "im2im_root": "im2im_epochs15_bs32_2025-05-12-19.25.20",
-                     "im2im_epoch": 5,
-                     "quantile_root": "unet_quantile_epochs50_bs12_2025-06-26-22.00.04",
-                     "quantile_epoch": 30,
+                     "im2im_root": "im2im_epochs50_bs32_2025-07-05-22.51.39",
+                     "im2im_epoch": 35,
                      "unet_im2im_root": "unet_im2im_epochs50_bs12_2025-06-26-23.16.13",
                      "unet_im2im_epoch": 25,
+                     "quantile_root": "unet_quantile_epochs50_bs12_2025-06-26-22.00.04",
+                     "quantile_epoch": 30,
                      "calib_data_path": ROOT + "/Fast_MRI/RAW_singlecoil_train/calibration",
                      "test_data_path": ROOT + "/Fast_MRI/RAW_singlecoil_train/validation",
                      "in_channels": 1,
                      "batch_size": 32,
                      "experiments_folder": ROOT + "/experiments"},
-            #  "qpi": {"experiment_type": "qpi",
-            #          "im2im_root": "im2im_epochs25_bs512_2025-05-12-19.31.28",
-            #          "im2im_epoch": 20,
-            #          "quantile_root": "unet_quantile_epochs50_bs72_2025-06-28-16.47.57",
-            #          "quantile_epoch": 20,
-            #          "unet_im2im_root": "unet_im2im_epochs50_bs72_2025-06-28-16.38.06",
-            #          "unet_im2im_epoch": 35,
-            #          "data_root": ROOT + "/bsccm",
-            #          "in_channels": 2,
-            #          "batch_size": 256,
-            #          "experiments_folder": ROOT + "/experiments",
-            #          "end_epoch": 25},
-             "motionblur": {"experiment_type": "motionblur",
-                          "im2im_root": "im2im_epochs50_bs24_2025-06-03-16.40.40", # 12 kernel size only
-                          "im2im_epoch": 25,
-                          "quantile_root": "unet_quantile_epochs50_bs24_2025-06-26-03.47.23",
-                          "quantile_epoch": 50,
-                          "unet_im2im_root": "unet_im2im_epochs50_bs16_2025-06-26-14.41.10",
-                          "unet_im2im_epoch": 50,
-                          "kernel_min": 12,
-                          "kernel_max": 12,
-                          "intensity": 0.1,
-                          "n_blur_samples": 1,
-                          "data_root": ROOT + "/motionblur",
-                          "in_channels": 1,
-                          "batch_size": 24,
-                          "experiments_folder": ROOT + "/experiments",
-                          "end_epoch": 50,},
+             "qpi": {"experiment_type": "qpi",
+                     "im2im_root": "im2im_epochs50_bs72_2025-09-11-14.29.04",
+                     "im2im_epoch": 15,
+                     "unet_im2im_root": "unet_im2im_epochs50_bs72_2025-08-26-11.10.34",
+                     "unet_im2im_epoch": 15,
+                     "quantile_root": "unet_quantile_epochs50_bs72_2025-08-26-11.10.45",
+                     "quantile_epoch": 20,
+                     "data_root": ROOT + "/bsccm",
+                     "in_channels": 2,
+                     "batch_size": 16,
+                     "experiments_folder": ROOT + "/experiments",
+                     "end_epoch": 25},
+            "CT": {"experiment_type": "CT",
+                    "im2im_root": "im2im_epochs50_bs4_2025-09-17-10.49.16",
+                    "im2im_epoch": 35,
+                    "quantile_root": "unet_quantile_epochs50_bs4_2025-09-17-10.47.41",
+                     "quantile_epoch": 35,
+                     "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-09-17-10.49.15",
+                     "unet_im2im_epoch": 20,
+                     "data_root": ROOT + "/CT_Scan",
+                     "in_channels": 1,
+                     "batch_size": 16,
+                     "experiments_folder": ROOT + "/experiments",
+                     "end_epoch": 50}
+            #  "motionblur": {"experiment_type": "motionblur",
+            #               "im2im_root": "im2im_epochs50_bs24_2025-06-03-16.40.40", # 12 kernel size only
+            #               "im2im_epoch": 50,
+            #               "unet_im2im_root": "unet_im2im_epochs50_bs16_2025-06-26-14.41.10",
+            #               "unet_im2im_epoch": 50,
+            #               "quantile_root": "unet_quantile_epochs50_bs24_2025-06-26-03.47.23",
+            #               "quantile_epoch": 50,
+            #               "kernel_min": 12,
+            #               "kernel_max": 12,
+            #               "intensity": 0.1,
+            #               "n_blur_samples": 1,
+            #               "data_root": ROOT + "/motionblur",
+            #               "in_channels": 1,
+            #               "batch_size": 24,
+            #               "experiments_folder": ROOT + "/experiments",
+            #               "end_epoch": 50,},
             }
 
 def run(tasks: List[str] = None,
@@ -154,7 +172,7 @@ def run(tasks: List[str] = None,
                                                      partition=partition,
                                                      ignore_checkpoints=False)
             requests = [
-                # ("im2im", info['im2im_epoch']),
+                ("im2im", info['im2im_epoch']),
                 ("unet_im2im", info['unet_im2im_epoch']),
                 ("quantile", info['quantile_epoch'])
             ]
@@ -392,143 +410,77 @@ def check_crossings(experiment_type: str, info: Dict, device: torch.device,
 
 def compute_stratified_risk(df_intervals_missed: pd.DataFrame) -> Dict[str, Dict[str, float]]:
     stratified_results = {}
-    included_experiments = ['gaussian', 'poisson', 'real_noise_mice', 'mri']#["motionblur", "real_noise_bpae"]
 
-    # Filter dataframe to only include the specified experiments
-    df_filtered = df_intervals_missed[df_intervals_missed["experiment"].isin(included_experiments)]
-    
     for method in ["im2im", "im2im_deep", "quantile"]:
-        method_df = df_filtered[df_filtered["method"] == method][["interval", "missed"]]
+        method_df = df_intervals_missed[df_intervals_missed["method"] == method][["interval", "missed"]]
         stratified_results[method] = size_stratified_risk(method_df)
-    
+
     return stratified_results
 
 def create_stratified_risk_plot(all_stratified: Dict[str, Dict[str, Dict[str, float]]], save_dir: Path):
-    categories = ["Short", "Short-Medium", "Medium-Long", "Long"]
-    included_experiments = ['gaussian', 'poisson', 'real_noise_mice', 'mri']
-    methods = ["im2im_deep", "quantile"]
+    categories  = ["Short", "Short-Medium", "Medium-Long", "Long"]
+    experiments = list(all_stratified.keys())
+    methods     = ["im2im_deep", "quantile"]
+
+    xtick_labels = []
+    for exp in experiments:
+        xtick_labels.extend([
+            f"{exp}\nIm2Im-Deep",
+            f"{exp}\nQUTCC"
+        ])
+
+    data = {cat: [] for cat in categories}
+    for exp in experiments:
+        for m in methods:
+            for cat in categories:
+                data[cat].append(all_stratified[exp][m][cat])
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+    bar_width = 0.18
+    x = np.arange(len(xtick_labels))
 
     colors_im2im_deep = ['#e6e6ff', '#bfbfff', '#9999ff', '#7373ff']
     colors_quantile = ["#ffe6e6", '#ffbfbf', '#ff9999', '#ff7373']
     palette_map = {"im2im_deep": colors_im2im_deep, "quantile": colors_quantile}
+    for i, cat in enumerate(categories):
+        bar_colors = []
+        for lbl in xtick_labels:
+            method = "im2im_deep" if "Deep" in lbl else "quantile"
+            bar_colors.append(palette_map[method][i])
+        ax.bar(x + (i - 1.5) * bar_width,   
+            data[cat],
+            width=bar_width,
+            label=cat,
+            color=bar_colors,
+            edgecolor='white',
+            linewidth=0.5)
 
-    for exp in included_experiments:
-        fig, ax = plt.subplots(figsize=(3, 2.5))
-        x = np.arange(len(methods))  # one bar group per method
-        bar_width = 0.18
+    ax.set_xticks(x, labels=xtick_labels, fontsize=10, ha="center")
+    ax.tick_params(axis="y", labelsize=16)
 
-        for i, cat in enumerate(categories):
-            values = [all_stratified[exp][m][cat] for m in methods]
-            bar_colors = [palette_map[m][i] for m in methods]
-            ax.bar(x + (i - 1.5) * bar_width,
-                   values,
-                   width=bar_width,
-                   label=cat,
-                   color=bar_colors,
-                   edgecolor='white',
-                   linewidth=0.5)
+    ax.set_ylim(0, 0.2)
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.axhline(0.10, ls="--", color="gray", lw=1)
+    ax.text(len(x)-0.3, 0.101, r"$\alpha$", va="bottom", ha="left", color="gray", fontsize=16)
+    ax.grid(axis='y', linestyle='--', alpha=0.3)
+    legend_handles = []
+    for i, cat in enumerate(categories):
+        g_rgb = to_rgb(colors_im2im_deep[i])
+        r_rgb = to_rgb(colors_quantile[i])
+        blended = to_hex([(g + r) / 2 for g, r in zip(g_rgb, r_rgb)])
+        legend_handles.append(Patch(facecolor=blended, edgecolor='white',
+                                    linewidth=0.5, label=cat))
 
-        # X-tick labels
-        ax.set_xticks(x)
-        ax.set_xticklabels(["Im2Im-Deep", "QUTCC"], fontsize=10)
-
-        # Styling
-        ax.tick_params(axis="y", labelsize=8)
-        ax.set_ylim(0, 0.3)
-        yticks = np.linspace(0, 0.3, 4)
-        ax.set_yticks(yticks)
-
-        ax.spines[['top', 'right']].set_visible(False)
-        # Legend
-        legend_handles = []
-        for i, cat in enumerate(categories):
-            g_rgb = to_rgb(colors_im2im_deep[i])
-            r_rgb = to_rgb(colors_quantile[i])
-            blended = to_hex([(g + r) / 2 for g, r in zip(g_rgb, r_rgb)])
-            legend_handles.append(Patch(facecolor=blended, edgecolor='white',
-                                        linewidth=0.5, label=cat))
-
-        # ax.legend(handles=legend_handles,
-        #           fontsize=12,
-        #           frameon=True,
-        #           handlelength=1.5,
-        #           bbox_to_anchor=(1, 1),
-        #           loc='upper right')
-
-        ax.set_title(f"Stratified Risk: {exp.replace('_', ' ').title()}", fontsize=12)
-
-        fig.tight_layout()
-        out_path = save_dir / f"stratified_risk_{exp}.pdf"
-        fig.savefig(out_path, dpi=300, bbox_inches="tight")
-        print(f"Saved stratified risk plot to: {out_path}")
-        plt.close(fig)
+    ax.legend(handles     = legend_handles,
+              fontsize    = 16,
+              frameon     = True,
+              handlelength= 2.5,
+              bbox_to_anchor=(1, 1),
+              loc='upper right')
     
-# def create_stratified_risk_plot(all_stratified: Dict[str, Dict[str, Dict[str, float]]], save_dir: Path):
-#     categories  = ["Short", "Short-Medium", "Medium-Long", "Long"]
-#     included_experiments = ['gaussian', 'poisson', 'real_noise_mice', 'mri']
-#     experiments = [exp for exp in all_stratified.keys() if exp in included_experiments]
-    
-#     methods     = ["im2im_deep", "quantile"]
-
-#     xtick_labels = []
-#     for exp in experiments:
-#         xtick_labels.extend([
-#             f"{exp}\nIm2Im-Deep",
-#             f"{exp}\nQUTCC"
-#         ])
-
-#     data = {cat: [] for cat in categories}
-#     for exp in experiments:
-#         for m in methods:
-#             for cat in categories:
-#                 data[cat].append(all_stratified[exp][m][cat])
-
-#     fig, ax = plt.subplots(figsize=(6, 4))
-#     bar_width = 0.18
-#     x = np.arange(len(xtick_labels))
-
-#     colors_im2im_deep = ['#e6e6ff', '#bfbfff', '#9999ff', '#7373ff']
-#     colors_quantile = ["#ffe6e6", '#ffbfbf', '#ff9999', '#ff7373']
-#     palette_map = {"im2im_deep": colors_im2im_deep, "quantile": colors_quantile}
-#     for i, cat in enumerate(categories):
-#         bar_colors = []
-#         for lbl in xtick_labels:
-#             method = "im2im_deep" if "Deep" in lbl else "quantile"
-#             bar_colors.append(palette_map[method][i])
-#         ax.bar(x + (i - 1.5) * bar_width,   
-#             data[cat],
-#             width=bar_width,
-#             label=cat,
-#             color=bar_colors,
-#             edgecolor='white',
-#             linewidth=0.5)
-
-#     ax.set_xticks(x, labels=xtick_labels, fontsize=10, ha="center")
-#     ax.tick_params(axis="y", labelsize=16)
-
-#     ax.set_ylim(0, 0.3)
-#     ax.spines[['top', 'right']].set_visible(False)
-#     #ax.axhline(0.10, ls="--", color="gray", lw=1)
-#     #ax.text(len(x)-0.3, 0.101, r"$\alpha$", va="bottom", ha="left", color="gray", fontsize=16)
-#     #ax.grid(axis='y', linestyle='--', alpha=0.3)
-#     legend_handles = []
-#     for i, cat in enumerate(categories):
-#         g_rgb = to_rgb(colors_im2im_deep[i])
-#         r_rgb = to_rgb(colors_quantile[i])
-#         blended = to_hex([(g + r) / 2 for g, r in zip(g_rgb, r_rgb)])
-#         legend_handles.append(Patch(facecolor=blended, edgecolor='white',
-#                                     linewidth=0.5, label=cat))
-
-#     ax.legend(handles     = legend_handles,
-#               fontsize    = 8,
-#               frameon     = True,
-#               handlelength= 1.5,
-#               bbox_to_anchor=(1, 1),
-#               loc='upper right')
-    
-#     fig.tight_layout()
-#     fig.savefig(save_dir / "stratified_risk_all_tasks.pdf", dpi=300, bbox_inches="tight")
-#     print("Saved stratified risk plot to:", save_dir / "stratified_risk_all_tasks.pdf")
+    fig.tight_layout()
+    fig.savefig(save_dir / "stratified_risk_all_tasks.pdf", dpi=300, bbox_inches="tight")
+    print("Saved stratified risk plot to:", save_dir / "stratified_risk_all_tasks.pdf")
 
 def create_risk_plot(summary: Dict[str, Dict], save_dir: Path):
     experiments = list(summary.keys())
@@ -565,84 +517,45 @@ def create_risk_plot(summary: Dict[str, Dict], save_dir: Path):
     fig.savefig(save_dir / "risk_all_tasks.pdf", dpi=300, bbox_inches="tight")
     print("Saved risk plot to:", save_dir / "risk_all_tasks.pdf")
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch, PathPatch
-from typing import Dict
-from pathlib import Path
-import numpy as np
-import pandas as pd
-
 def create_violin_plot(all_df: pd.DataFrame, summary: Dict[str, Dict], save_dir: Path):
-    exclude_experiments = ["motionblur", "real_noise_bpae"]
-    included_experiments = [exp for exp in summary.keys() if exp not in exclude_experiments]
-    df_violin = all_df[
-        ((all_df["method"] == "im2im_deep") | (all_df["method"] == "quantile")) &
-        (~all_df["experiment"].isin(exclude_experiments))
-    ][["experiment", "method", "interval"]]
-    
+    df_violin = all_df[(all_df["method"] == "im2im_deep") | 
+                    (all_df["method"] == "quantile")][["experiment", "method", "interval"]]
     method_order = ["im2im_deep", "quantile"]
     method_labels = {"im2im_deep": "Im2Im-Deep", "quantile": "QUTCC"}
     palette = {'im2im_deep': '#7373ff', 'quantile': '#ff7373'}
-    multiplier = 1.5
+
+    multiplier = 2.5
     fig, ax = plt.subplots(figsize=(5.52 * multiplier, 2.5 * multiplier))
-    
-    # Plot violin
     sns.violinplot(
-        data=df_violin,
-        x="experiment",
-        y="interval",
-        hue="method",
-        order=included_experiments,  # ← only the ones that are actually plotted
-        hue_order=method_order,
-        split=False,
-        density_norm="count",
-        cut=0,
-        inner=None,
-        palette=palette,
-        ax=ax
+        data         = df_violin,
+        x            = "experiment",
+        y            = "interval",
+        hue          = "method",
+        order        = list(summary.keys()),
+        hue_order    = method_order,
+        split        = True,
+        density_norm = "count",
+        cut          = 0,
+        inner        = None,
+        palette      = palette,
+        ax           = ax
     )
-    
-    # Add mean lines (dashed)
-    # Group by (experiment, method)
-    grouped = df_violin.groupby(["experiment", "method"])["interval"]
-    offset = 0.2  # Half-width offset to separate hues within one x tick
-    position_map = {
-        "im2im_deep": -offset,
-        "quantile": offset
-    }
-    
-    # Iterate over included_experiments instead of summary.keys()
-    for i, exp in enumerate(included_experiments):  # ← Changed this line
-        for method in method_order:
-            key = (exp, method)
-            if key in grouped.groups:
-                vals = grouped.get_group(key)
-                mean_val = np.mean(vals)
-                x_pos = i + position_map[method]
-                line = ax.hlines(mean_val, x_pos - 0.15, x_pos + 0.15, color='black', ls='-', lw=0.8)
-                
-                # Clip to violin - fix the index calculation
-                violin_index = i * 2 + method_order.index(method)  # ← Fixed this line
-                if violin_index < len(ax.collections):
-                    violin = ax.collections[violin_index]
-                    if len(violin.get_paths()) > 0:  # ← Added safety check
-                        patch = PathPatch(violin.get_paths()[0], transform=ax.transData)
-                        line.set_clip_path(patch)
-    
-    ax.set_xlabel("")
-    ax.set_ylabel("")
+
+    ax.set_xlabel("") # Method
+    ax.set_ylabel("") # Interval Size
     ax.set_ylim(0, 0.35)
+
     legend_elements = [
         Patch(facecolor=palette['im2im_deep'], label='Im2Im-Deep'), 
         Patch(facecolor=palette['quantile'], label='QUTCC')
     ]
     ax.legend(handles=legend_elements, fontsize=8 * multiplier, loc='upper right', bbox_to_anchor=(1.2, 1.2))
+
     ax.tick_params(axis="x", which='both', bottom=False, top=False, labelbottom=False)
     ax.tick_params(axis="y", labelsize=8 * multiplier)
-    ax.set_yticks(np.linspace(0, 0.35, num=3))
-    ax.spines[['top', 'right']].set_visible(False)
+    ax.spines[['top', 'right']].set_visible(False)    
     fig.tight_layout()
+
     violin_plot_path = save_dir / "interval_length_split_violin_all_tasks.png"
     fig.savefig(violin_plot_path, dpi=300, bbox_inches="tight")
     print("Saved split violin plot to:", violin_plot_path)

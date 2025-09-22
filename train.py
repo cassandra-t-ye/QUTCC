@@ -25,6 +25,10 @@ from datasets.denoising_fmd.data_loader import (fluore_to_tensor,
 from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
 from datasets.motionblur import get_motionblur_dataloaders
+
+from datasets.LidcIdri import load_ct_dataloader
+from datasets.LidcIdri import load_ct_dataloader_two
+
 from models.pinball import BatchedPinballLoss, PinballLoss
 from utils import load_yaml, mkdirs, module_size
 from utils.metrics import cal_psnr, cal_ssim2, cal_lpips
@@ -43,7 +47,8 @@ def parse_arguments():
                                                                 "Denoising", 
                                                                 "QPI",
                                                                 "Lensless",
-                                                                "Motionblur"], help='experiment type', required=True)
+                                                                "Motionblur", 
+                                                                "CT"], help='experiment type', required=True)
     
     parser.add_argument('--net', type=str, default='unet_quantile', choices=['unet', 
                                                                              'unet_quantile', 
@@ -86,6 +91,9 @@ def parse_arguments():
     parser.add_argument('--cuda', type=int, default=0, help='cuda device number')
     parser.add_argument('--cmap', type=str, default='inferno', help='colormap for plotting')
 
+    #ADDED FOR CT
+    parser.add_argument('--ct-step-size', type=int, default=800, help='step size for CT radon transform')
+    
     # DDP-specific args
     parser.add_argument('--dist-backend', type=str, default='nccl')
     parser.add_argument('--dist-url', type=str, default='tcp://127.0.0.1:29500')
@@ -256,6 +264,23 @@ def get_dataloaders(args, transform):
         [print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)} | Test dataset size: {len(test_indices)}")]
         json.dump(calib_indices.tolist(), open(args.run_dir + "/calib_indices.json", 'w'), indent=4)
         json.dump(test_indices.tolist(), open(args.run_dir + "/test_indices.json", 'w'), indent=4)
+
+    elif args.experiment_type == "CT":
+        train_loader = load_ct_dataloader_two(
+            root_path=args.data_root,
+            dataset_type = "train",
+            batch_size = args.batch_size,
+            steps = args.ct_step_size
+        )
+
+        test_loader = load_ct_dataloader_two(
+            root_path=args.data_root,
+            dataset_type = "test",
+            batch_size = args.batch_size,
+            steps = args.ct_step_size
+        )
+        [print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size:{len(test_loader.dataset)}")]
+     
     else:
         raise ValueError(f"Unknown experiment type: {args.experiment_type}")
     

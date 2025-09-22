@@ -48,7 +48,7 @@ def create_model(net: str, device: str, in_channels: int = 1, out_channels: int 
 def load_model_state(model: nn.Module, ckpt_path: str, device: str) -> nn.Module:
     """Loads a model's state dictionary from a checkpoint."""
     checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint['model_state_dict'], strict = False) #PUT IN HERE TO DEBUG CT
     print(f"Model state loaded from {ckpt_path}")
     return model
 
