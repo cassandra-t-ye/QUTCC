@@ -1,12 +1,10 @@
 from typing import List, Literal, Tuple
-
 import numpy as np
 import torch
 from bsccm import BSCCM
 from torch.utils.data import DataLoader, Dataset, Subset
-
 from datasets.utils import normalize
-
+import os
 
 class BSCCMDataset(Dataset):
     """
@@ -14,7 +12,7 @@ class BSCCMDataset(Dataset):
     """
 
     def __init__(self, 
-                 dataset_path: str = "/share/monakhova/Cassandra_data/UQNet_proj/bsccm", 
+                 dataset_path: str = None, 
                  input_channels: List[str] = ['DPC_Left', 'DPC_Right'],
                  transform=None,
                  normalization: Literal[None, 'standard', 'min-max']=None):
@@ -55,7 +53,7 @@ class BSCCMDataset(Dataset):
         return self.indices.copy()
         
 def get_bsccm_dataloaders(
-        dataset_path: str = "/share/monakhova/Cassandra_data/UQNet_proj/bsccm",
+        dataset_path: str = None,
         batch_size: int = 16,
         input_channels: List[str] = ['DPC_Left', 'DPC_Right'],
         validation_split: float = 0.1,
@@ -91,7 +89,7 @@ def get_bsccm_dataloaders(
     return train_loader, validation_loader, calib_indices, test_indices
 
 def get_bsccm_calib(calib_indices: np.ndarray,
-                    dataset_path: str = "/share/monakhova/Cassandra_data/UQNet_proj/bsccm",
+                    dataset_path: str = None,
                     batch_size: int = 16,
                     input_channels: List[str] = ['DPC_Left', 'DPC_Right'],
                     transform = None,
@@ -105,7 +103,7 @@ def get_bsccm_calib(calib_indices: np.ndarray,
     return calib_loader
 
 def get_bsccm_test(test_indices: np.ndarray,
-               dataset_path: str = "/share/monakhova/Cassandra_data/UQNet_proj/bsccm",
+               dataset_path: str = None,
                batch_size: int = 16,
                input_channels: List[str] = ['DPC_Left', 'DPC_Right'],
                transform = None,
