@@ -219,7 +219,7 @@ class CalibrateModelTask(submitit.helpers.Checkpointable):
 
 class CalibrationManager:
     def __init__(self, experiment_type: str, info: Dict, calib_subset: int = 2000,
-                 partition: str = "monakhova", timeout_min: int = 120, logs_dir: str = "slurm_archive",
+                 partition: str, timeout_min: int = 120, logs_dir: str,
                  ignore_checkpoints: bool = False):
         self.experiment_type = experiment_type
         self.info = info
@@ -339,8 +339,8 @@ class IntervalRiskTask(submitit.helpers.Checkpointable):
     
 class AnalysisManager:
     def __init__(self, experiment_type: str, info: Dict, test_subset: int = 2000,
-                 intervals_subset: int = 500_000, partition: str = "monakhova", 
-                 timeout_min: int = 60, logs_dir: str = "slurm_archive",
+                 intervals_subset: int = 500_000, partition: str, 
+                 timeout_min: int = 60, logs_dir: str,
                  ignore_checkpoints: bool = False,
                  pop_df = False):
         self.experiment_type = experiment_type
@@ -400,10 +400,10 @@ class AnalysisManager:
         
         return results
     
-def create_local_executor(partition: str = 'monakhova', timeout_min: int = 120,
-                          logs_dir: str = "slurm_archive", gpus_per_node: int = 1, 
-                          mem_gb: int = 64, job_name="uqnet_analysis") -> submitit.AutoExecutor:
-    exclude_nodes = 'portal-compute-01,taylor-compute-01'
+def create_local_executor(partition: str , timeout_min: int = 120,
+                          logs_dir: str, gpus_per_node: int = 1, 
+                          mem_gb: int = 64, job_name) -> submitit.AutoExecutor:
+    exclude_nodes = 
     os.environ.pop('SLURM_CPU_BIND', None) # unset SLURM_CPU_BIND
     executor = submitit.AutoExecutor(folder=logs_dir, slurm_max_num_timeout=3)
     executor.update_parameters(

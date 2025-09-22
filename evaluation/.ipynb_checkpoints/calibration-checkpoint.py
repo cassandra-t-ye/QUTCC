@@ -91,17 +91,9 @@ def compute_optimal_lambdas(dataloader: DataLoader, model: ModelWithUncertainty,
     for lambda_ in reversed(lambdas):
         sets = nested_sets_from_output(model, all_outputs, lambda_)
         losses = fraction_missed_loss(sets, all_labels)
-        # lower, upper = return_calibrated_bounds(all_outputs, lambda_)
-        # B, H, W = sets[0].shape
-        # lower, upper = lower.view(B, 1, H, W), upper.view(B, 1, H, W)
-        # print(lower.shape, upper.shape)
-        # missed_bin = get_binary_missed(lower, upper, all_labels).view(B, -1)
-        # per_image_missed_counts = missed_bin.sum(dim=1).sum().item()
-        # losses_ours = per_image_missed_counts / (B * H * W)
         Rhat = losses.mean().item()
         RhatPlus = HB_mu_plus(Rhat, n_samples, delta)
         print(f"Lambda: {lambda_:.4f}  |  Rhat: {Rhat:.4f}  |  RhatPlus: {RhatPlus:.4f}")
-        # if Rhat > alpha:
         if Rhat >= alpha:
             optimal_lambda = last_lambda if last_lambda is not None else lambda_
             print(f"Optimal lambda found: {optimal_lambda:.4f}")
