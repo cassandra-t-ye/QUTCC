@@ -12,12 +12,12 @@ from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
 import datasets.fastmri.utils as fastmri_utils
-from datasets.bsccm import get_bsccm_calib, get_bsccm_test
-from datasets.denoising_fmd.data_loader import (load_noisy_single_loader,
-                                                load_real_noise_loader)
-from datasets.diffusercam import get_diffusercam_calib, get_diffusercam_test
 from datasets.fastmri import FastMRIDataset
-from datasets.motionblur import get_motionblur_calib, get_motionblur_test
+from datasets.bsccm import get_bsccm_calib, get_bsccm_test
+from datasets.fmd.data_loader import (load_noisy_single_loader,
+                                                load_real_noise_loader)
+from datasets.LidcIdri import load_ct_dataloader_two
+
 from evaluation import get_test_intervals_missed
 from evaluation.calibration import (compute_optimal_lambdas,
                                     compute_optimal_lambdas_quantile)
@@ -49,29 +49,19 @@ def get_calib_dataloader(experiment_type: str, info: Dict[str, Any], net: Litera
         return get_bsccm_calib(calib_indices[:calib_subset], info["data_root"], 
                                batch_size=batch_size, transform=None, 
                                normalization='min-max', num_workers=1, pin_memory=True)
-    elif experiment_type == "lensless":
-        run_folder = Path(info["experiments_folder"]) / experiment_type / info[f'{net}_root']
-        calib_indices_path = run_folder / "calib_indices.json"
-        with open(calib_indices_path, "r") as f:
-            calib_indices = json.load(f)
-        return get_diffusercam_calib(calib_indices[:calib_subset], info["data_root"], 
-                                     batch_size=batch_size, transform=None, 
-                                     normalization='min-max', num_workers=1, pin_memory=True)
-    elif experiment_type == "motionblur":
-        run_folder = Path(info["experiments_folder"]) / experiment_type / info[f'{net}_root']
-        calib_indices_path = run_folder / "calib_indices.json"
-        with open(calib_indices_path, "r") as f:
-            calib_indices = json.load(f)
-        return get_motionblur_calib(calib_indices[:calib_subset], info["data_root"],
-                                    batch_size=batch_size,  
-                                    n_blur_samples=info["n_blur_samples"], 
-                                    kernel_min=info["kernel_min"], kernel_max=info["kernel_max"], intensity=info["intensity"],
-                                    transform=None, normalization='min-max', num_workers=1, pin_memory=True)
-    elif experiment_type == "real_noise":
+    elif experiment_type == "real_noise":        
         loader = load_real_noise_loader(noisy_path=info["calib_data_path"] + "/noisy",
                                         gt_path=info["calib_data_path"] + "/gt",
                                         batch_size=batch_size, shuffle=False)
         calib_dataset = loader.dataset
+
+    elif experiment_type == "CT":
+        loader = load_ct_dataloader_two(root_path="/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662",
+                            dataset_type = "calibrate",
+                            batch_size = 16,
+                            steps = 800)
+        calib_dataset = loader.dataset
+
     else:
         raise ValueError(f"Unknown experiment type: {experiment_type}")
 
@@ -105,23 +95,16 @@ def get_test_dataloader(experiment_type: str, info: Dict[str, Any], net: Literal
         return get_bsccm_test(test_indices[:test_subset], info["data_root"], 
                               batch_size=batch_size, transform=None, 
                               normalization='min-max', num_workers=1, pin_memory=True)
-    elif experiment_type == "lensless":
-        return get_diffusercam_test(info["data_root"], batch_size=batch_size,
-                                    transform=None, normalization='min-max', num_workers=1, pin_memory=True)
-    elif experiment_type == "motionblur":
-        run_folder = Path(info["experiments_folder"]) / experiment_type / info[f'{net}_root']
-        test_indices_path = run_folder / "test_indices.json"
-        with open(test_indices_path, "r") as f:
-            test_indices = json.load(f)
-        return get_motionblur_test(test_indices[:test_subset], info["data_root"],
-                                   batch_size=batch_size,
-                                   n_blur_samples=info["n_blur_samples"],
-                                   kernel_min=info["kernel_min"], kernel_max=info["kernel_max"], intensity=info["intensity"],
-                                   transform=None, normalization='min-max', num_workers=1, pin_memory=True)
     elif experiment_type == "real_noise":
         loader = load_real_noise_loader(noisy_path=info["test_data_path"] + "/noisy",
                                         gt_path=info["test_data_path"] + "/gt",
                                         batch_size=batch_size, shuffle=False)
+        test_dataset = loader.dataset     
+    elif experiment_type == "CT":
+        loader = load_ct_dataloader_two(root_path="/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662",
+                            dataset_type = "validate",
+                            batch_size = 16,
+                            steps = 800)
         test_dataset = loader.dataset
     else:
         raise ValueError(f"Unknown experiment type: {experiment_type}")
