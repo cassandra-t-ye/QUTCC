@@ -143,37 +143,11 @@ class FastMRIDataset(Dataset):
             sample = (kspace, mask, target, attrs, fname.name, dataslice)
         else:
             sample = self.transform(kspace, mask, target, attrs, fname.name, dataslice)
-
-        #YOU HAVE TO FIX THE NORMALIZING HERE
-        #print(np.max(sample[0]), np.min(sample[0]))
-        #print(np.max(sample[1]), np.min(sample[1]))
-        
-        # if self.normalize_input == 'standard' and self.norm_params != None:
-        #   input_img = (sample[0] - self.norm_params['input_mean'])/self.norm_params['input_std']
-        # elif self.normalize_input == 'min-max' and self.norm_params != None:
-        #   input_img = (sample[0] - self.norm_params['input_min'])/self.norm_params['input_max']
-        # else:
-        #   input_img = sample[0]
- 
-        # if self.normalize_output == 'standard' and self.norm_params != None:
-        #   output_img = (sample[1] - self.norm_params['output_mean'])/self.norm_params['output_std']
-        # elif self.normalize_output == 'min-max' and self.norm_params != None:
-        #   output_img = (sample[1] - self.norm_params['output_min'])/self.norm_params['output_max']
-        # else:
-        #   print("No normalization parameters yet.")
-        #   output_img = sample[1]
-        
         inp = sample[0]/torch.max(sample[0])
         outp = sample[1]/torch.max(sample[1])
         input_img = torch.clip(inp, 0, 1)
         output_img = torch.clip(outp, 0, 1)
-
-        #print(torch.max(input_img), torch.min(input_img))
-
-        # add channel dimension
         return (input_img.unsqueeze(0), output_img.unsqueeze(0))
-
-    
 
 if __name__ == "__main__":
   random.seed(1)
@@ -181,5 +155,4 @@ if __name__ == "__main__":
   mask_info = {'type': 'equispaced', 'center_fraction' : [0.08], 'acceleration' : [4]}
   dataset = FastMRIDataset(path, normalize_input='standard', normalize_output = 'min-max', mask_info=mask_info, num_volumes=5)
   utils.normalize_dataset(dataset)
-  #loader = DataLoader(dataset, batch_size=5, shuffle=True)
   pdb.set_trace()
