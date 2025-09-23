@@ -1,38 +1,52 @@
-# [QUTCC🤗: Quantile Uncertainty Training and Conformal Calibration](https://arxiv.org/abs/2507.14760)
-The official implementation of the [QUTCC: Quantile Uncertainty Training and Conformal Calibration for Imaging Inverse Problems 🤗](https://arxiv.org/abs/2310.16102)
+# QUTCC🤗: Quantile Uncertainty Training and Conformal Calibration
+The official implementation of QUTCC: Quantile Uncertainty Training and Conformal Calibration for Imaging Inverse Problems
 
 ## Setup: 
-
-Clone this project using:
-
-```
-git clone https://github.com/cassandra-t-ye/QUTCC.git
-```
-
 Dependencies can be installed using
-
 ```
 conda env create -f environment.yml
 source activate qutcc
 ```
 
-## Reproducing the results
+## Data Processing
+We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. Once downloaded and processed, please proceed to the training portion.  
+
+**Available Tasks:**
+- [MRI dataset](#fastmri-dataset)
+- [Gaussian/Poisson/Real Noise Dataset](#gaussianpoissonreal-noise-dataset)
+- [CT dataset](#ct-dataset)
+- [QPI Dataset](#qpi-dataset)
+
+---
 
 ### FastMRI dataset
 * Download ```knee_singlecoil_train``` from the [FastMRI](https://fastmri.med.nyu.edu/) dataset. 
-* [TO-DO: Add something about changing the path]
+* In the QUTCC directory, run 
+```
+python datasets/fastmri/data_processing.py -d [path/to/fast-mri/dataset]
+```
 
 ### Gaussian/Poisson/Real Noise Dataset
-* Download the [FMD](https://github.com/yinhaoz/denoising-fluorescence) dataset.
-* [TO-DO: Add something about changing the path]
+* Download the [FMD dataset](https://github.com/yinhaoz/denoising-fluorescence).
+* For the Gaussian or Poisson task, run
+```
+python datasets/fmd/data_processing.py -d [path/to/fmd/dataset]
+```
+* For the Real Noise task, run
+```
+python datasets/fmd/data_processing_realnoise.py -d [path/to/fmd/dataset]
+```
 
-## Paper 
-[QUTCC: Quantile Uncertainty Training and Conformal Calibration for Imaging Inverse Problems 🤗]([https://arxiv.org/abs/2310.16102]
+### CT dataset
+* Download the [LIDC-IDRI dataset](https://www.cancerimagingarchive.net/collection/lidc-idri/).
+* In the QUTCC directory, run
 ```
-@article{ye2025qutcc,
-  title={QUTCC: Quantile Uncertainty Training and Conformal Calibration for Imaging Inverse Problems},
-  author={Ye, Cassandra Tong and Li, Shamus and King, Tyler and Monakhova, Kristina},
-  journal={arXiv preprint arXiv:2507.14760},
-  year={2025}
-}
+python datasets/Lidcldri/data_processing.py -d [path/to/lidcldri/dataset]
 ```
+
+### QPI Dataset
+* Download the [BSCCM Dataset](https://github.com/Waller-Lab/BSCCM), following the instructions from the repo. 
+
+## Training
+
+## Evaluation
