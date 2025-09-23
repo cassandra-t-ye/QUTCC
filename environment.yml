@@ -32,3 +32,5 @@ dependencies:
       - bsccm
       - wandb
       - deepinv
+      - kornia
+      - submitit
