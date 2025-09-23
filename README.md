@@ -35,7 +35,7 @@ python datasets/fmd/data_processing.py -d [path/to/fmd/dataset]
 * For the Real Noise task, run
 ```
 python datasets/fmd/data_processing_realnoise.py -d [path/to/fmd/dataset]
-``
+```
 
 ### CT dataset
 * Download the [LIDC-IDRI dataset](https://www.cancerimagingarchive.net/collection/lidc-idri/).
