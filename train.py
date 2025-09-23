@@ -408,6 +408,13 @@ def main(args):
     setup_experiment(args)
 
     wandb_name = f"{args.exp_name}-{args.net}-bs{args.batch_size}"
+    wandb_name += f"-{time.strftime('%Y%m%d-%H%M%S')}"
+    wandb.init(
+        project=args.wandb_project,
+        entity=args.wandb_entity,
+        name=wandb_name,
+        config=vars(args)
+    )
     device = torch.device(f'cuda:{args.cuda}' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
