@@ -23,7 +23,7 @@ We evaluate QUTCC on 6 different inverse tasks, which we provide support for bel
 * Download ```knee_singlecoil_train``` from the [FastMRI](https://fastmri.med.nyu.edu/) dataset. 
 * In the QUTCC directory, run 
 ```
-python datasets/fastmri/processing_data.py -d [path/to/fast-mri/dataset]
+python datasets/fastmri/data_processing.py -d [path/to/fast-mri/dataset]
 ```
 
 ### Gaussian/Poisson/Real Noise Dataset
