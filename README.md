@@ -28,7 +28,14 @@ python datasets/fastmri/data_processing.py -d [path/to/fast-mri/dataset]
 
 ### Gaussian/Poisson/Real Noise Dataset
 * Download the [FMD dataset](https://github.com/yinhaoz/denoising-fluorescence).
-* [TO-DO: Add something about changing the path]
+* For the Gaussian or Poisson task, run
+```
+python datasets/fmd/data_processing.py -d [path/to/fmd/dataset]
+```
+* For the Real Noise task, run
+```
+python datasets/fmd/data_processing_realnoise.py -d [path/to/fmd/dataset]
+``
 
 ### CT dataset
 * Download the [LIDC-IDRI dataset](https://www.cancerimagingarchive.net/collection/lidc-idri/).
