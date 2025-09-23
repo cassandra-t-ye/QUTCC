@@ -12,6 +12,7 @@ import torch
 from deepinv.datasets import LidcIdriSliceDataset
 import torchvision.transforms as transforms
 import os
+import argparse
 
 def normalize(x):
     x = x.astype(np.float32)
@@ -54,11 +55,26 @@ if __name__ == "__main__":
     preprocessing = transforms.Compose([
         transforms.Lambda(lambda x: normalize(x))  # Direct numpy normalization
     ])
-    root = "/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662"
-    
-    gt_folder = "/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662/new_clean"
-    noisy_folder = "/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662/new_noisy"
 
+    parser = argparse.ArgumentParser(description='Process dataset')
+    parser.add_argument('--dataset', '-d', type=str, required=True, 
+                       help='Path to the dataset file')
+    
+    args = parser.parse_args()
+    dataset_path = args.dataset
+    
+    root = dataset_path
+
+    gt_folder =  os.path.join(dataset_path, "clean") 
+    noisy_folder =  os.path.join(dataset_path, "noisy")
+
+    for folder in [gt_folder, noisy_folder]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        print(f"Created directory: {folder}")
+    else:
+        print(f"Directory already exists: {folder}")
+        
     dataset = LidcIdriSliceDataset(
         root=root,
         hounsfield_units=False,  # Raw pixel values, not HU
@@ -71,8 +87,6 @@ if __name__ == "__main__":
         radon_transform = radon(clean_image, 800)
         noisy_image = back_project(radon_transform)
         noisy_image = normalize(noisy_image)
-        #print(f"Clean image min/max: {np.min(clean_image), np.max(clean_image)}")
-        #print(f"Noisy image min/max: {np.min(noisy_image), np.max(noisy_image)}")
         clean_filename = os.path.join(gt_folder, f"{im:04d}.png")
         noisy_filename = os.path.join(noisy_folder, f"{im:04d}.png")
         plt.imsave(clean_filename, clean_image)

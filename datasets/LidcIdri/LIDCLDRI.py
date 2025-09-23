@@ -1,172 +1,160 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-from torch.utils.data import Dataset, DataLoader, random_split
-from tqdm import tqdm
-from typing import Dict, Tuple
-from scipy.interpolate import interp1d
-import scipy.fftpack as fft
-from skimage.transform import rotate
-from deepinv.datasets import LidcIdriSliceDataset
-import torchvision.transforms as transforms
 import os
-import pickle
-from . import backproject
+import cv2
+import torch
+import matplotlib.pyplot as plt
+from torch.utils.data import Dataset, DataLoader, random_split
+from PIL import Image
+import torchvision.transforms as transforms
+from typing import Tuple, Optional, Callable
+import glob
+import numpy as np
 
-class CT_Inverse_Cached(Dataset):
-    def __init__(self, gt_dataset, step_size=800, cache_dir=None):
-        self.gt_dataset = gt_dataset
-        self.step_size = step_size
-        self.cache_dir = cache_dir
-        self._cache = {}
-        
-        # Create cache directory if specified
-        if cache_dir:
-            os.makedirs(cache_dir, exist_ok=True)
-            self.cache_file = os.path.join(cache_dir, f'ct_cache_steps_{step_size}.pkl')
-            self._load_cache()
-    
-    def _load_cache(self):
-        """Load existing cache from disk"""
-        if os.path.exists(self.cache_file):
-            try:
-                with open(self.cache_file, 'rb') as f:
-                    self._cache = pickle.load(f)
-                print(f"Loaded cache with {len(self._cache)} items")
-            except:
-                print("Failed to load cache, starting fresh")
-                self._cache = {}
-    
-    def _save_cache(self):
-        """Save cache to disk"""
-        if self.cache_dir:
-            with open(self.cache_file, 'wb') as f:
-                pickle.dump(self._cache, f)
-    
-    def __len__(self):
-        return len(self.gt_dataset)
-    
-    def __getitem__(self, idx):
-        """
-        Returns a tuple of (noisy_image, gt_image)
-        """
-        # Check if this item is already cached
-        if idx in self._cache:
-            return self._cache[idx]
-        
-        gt_image = self.gt_dataset[idx]
-        
-        # Create noisy version using radon transform and backprojection
-        radon_test = backproject.radon(gt_image, self.step_size)
-        noisy = torch.tensor(backproject.back_project(radon_test), dtype=torch.float32)
-        noisy = torch.clamp(noisy / torch.max(noisy), 0, 1)
-        
-        if not isinstance(gt_image, torch.Tensor):
-            gt_image = torch.tensor(gt_image, dtype=torch.float32)
-        
-        result = (noisy.unsqueeze(0), gt_image.unsqueeze(0))
-        
-        # Cache the result
-        self._cache[idx] = result
-        
-        # Periodically save cache
-        if len(self._cache) % 100 == 0:
-            self._save_cache()
-        
-        return result
-    
-    def __del__(self):
-        """Save cache when object is destroyed"""
-        if hasattr(self, '_cache') and self.cache_dir:
-            self._save_cache()
-
-class CT_Inverse_Precomputed(Dataset):
-    def __init__(self, gt_dataset, step_size=800, precompute_all=True):
-        self.gt_dataset = gt_dataset
-        self.step_size = step_size
-        self.precomputed_data = []
-        
-        if precompute_all:
-            self._precompute_all()
-    
-    def _precompute_all(self):
-        """Precompute all radon/backprojection pairs at initialization"""
-        print(f"Precomputing {len(self.gt_dataset)} samples...")
-        
-        for idx in tqdm(range(len(self.gt_dataset))):
-            gt_image = self.gt_dataset[idx]
-            
-            # Create noisy version using radon transform and backprojection
-            radon_test = backproject.radon(gt_image, self.step_size)
-            noisy = torch.tensor(backproject.back_project(radon_test), dtype=torch.float32)
-            noisy = torch.clamp(noisy / torch.max(noisy), 0, 1)
-            
-            if not isinstance(gt_image, torch.Tensor):
-                gt_image = torch.tensor(gt_image, dtype=torch.float32)
-            
-            self.precomputed_data.append((noisy.unsqueeze(0), gt_image.unsqueeze(0)))
-        
-        print("Precomputation complete!")
-    
-    def __len__(self):
-        return len(self.gt_dataset)
-    
-    def __getitem__(self, idx):
-        return self.precomputed_data[idx]
-
-def safe_max_normalize(x):
+class PairedImageDataset(Dataset):
     """
-    Safe max normalization that handles edge cases.
-    Works with raw pixel values (not HU units).
+    Dataset for paired noisy and clean images with matching filenames
     """
-    x = x.astype(np.float32)
-    normalized = x / np.max(x)
-    return np.clip(normalized.astype(np.float32), 0, 1)
+    
+    def __init__(
+        self, 
+        noisy_path: str, 
+        clean_path: str, 
+        dataset_type: str, #train, test, calibrate, validate
+        transform: Optional[Callable] = None,
+        image_extensions: Tuple[str, ...] = ('.png'),
+        
+    ):
+        """
+        Args:
+            noisy_path: Path to directory containing noisy images
+            clean_path: Path to directory containing clean images
+            transform: Optional transform to be applied to both images
+            image_extensions: Tuple of valid image file extensions
+            dataset_type: Type of dataset split ('train', 'test', 'calibrate', 'validate')
+        """
+        self.noisy_path = noisy_path
+        self.clean_path = clean_path
+        self.transform = transform
+        self.dataset_type = dataset_type
+        
+        # Get all image files from noisy directory
+        self.noisy_files = []
+        for ext in image_extensions:
+            self.noisy_files.extend(glob.glob(os.path.join(noisy_path, f"*{ext}")))
+            self.noisy_files.extend(glob.glob(os.path.join(noisy_path, f"*{ext.upper()}")))
+        
+        # Extract just the filenames (without full path)
+        self.filenames = [os.path.basename(f) for f in self.noisy_files]
+        
+        # Verify that corresponding clean images exist
+        self.valid_pairs = []
+        for i, filename in enumerate(self.filenames):
+            clean_file_path = os.path.join(clean_path, filename)
+            if os.path.exists(clean_file_path):
+                self.valid_pairs.append((self.noisy_files[i], clean_file_path))
+            else:
+                print(f"Warning: No matching clean image found for {filename}")
+        
+        if len(self.valid_pairs) == 0:
+            raise ValueError("No valid image pairs found. Check that filenames match between directories.")
+        
+        # Apply dataset splitting if dataset_type is specified
+        if self.dataset_type is not None:
+            self.valid_pairs = self._get_dataset_split()
+    
+    def _get_dataset_split(self):
+        """Split the dataset based on dataset_type"""
+        total_size = len(self.valid_pairs)
+        
+        train_size = int(0.6 * total_size)
+        test_size = int(0.1 * total_size)
+        calib_size = int(0.2 * total_size)
+        valid_size = total_size - train_size - calib_size - test_size
+        
+        # Create indices for splitting
+        indices = torch.randperm(total_size, generator=torch.Generator().manual_seed(42))
+        
+        train_indices = indices[:train_size]
+        test_indices = indices[train_size:train_size + test_size]
+        calib_indices = indices[train_size + test_size:train_size + test_size + calib_size]
+        valid_indices = indices[train_size + test_size + calib_size:]
+        
+        if self.dataset_type == "train":
+            return [self.valid_pairs[i] for i in train_indices]
+        elif self.dataset_type == "test":
+            return [self.valid_pairs[i] for i in test_indices]
+        elif self.dataset_type == "calibrate":
+            return [self.valid_pairs[i] for i in calib_indices]
+        elif self.dataset_type == "validate":
+            return [self.valid_pairs[i] for i in valid_indices]
+        else:
+            raise ValueError(f"Invalid dataset_type: {self.dataset_type}. Must be one of 'train', 'test', 'calibrate', 'validate'")
+    
+    def __len__(self) -> int:
+        return len(self.valid_pairs)
+    
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Returns:
+            Tuple of (noisy_image, clean_image) as tensors
+        """
+        noisy_path, clean_path = self.valid_pairs[idx]
 
-def load_dataset(clean_path, noisy_path, dataset_type):
-    root_path = "/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662"
-    preprocessing = transforms.Compose([transforms.Lambda(lambda x: safe_max_normalize(x))])
-    dataset = LidcIdriSliceDataset(
-        root=root_path,
-        hounsfield_units=False,
-        transform=preprocessing
-    )
-    
-    train_size = int(0.6 * len(dataset))
-    test_size = int(0.1 * len(dataset))
-    calib_size = int(0.2 * len(dataset))
-    valid_size = len(dataset) - train_size - calib_size - test_size
-    
-    train_dataset, test_dataset, calib_dataset, valid_dataset = random_split(
-        dataset, [train_size, test_size, calib_size, valid_size], 
-        generator=torch.Generator().manual_seed(42)
-    )
-    
-    if dataset_type == "train":
-        return train_dataset
-    if dataset_type == "test":
-        return test_dataset
-    if dataset_type == "calibrate":
-        return calib_dataset
-    if dataset_type == "validate":
-        return valid_dataset
-    
-    print("ERROR: NO DATASET RETURNED")
-    return None
+        # Load images
+        noisy_image = cv2.imread(noisy_path, cv2.IMREAD_GRAYSCALE)
+        clean_image = cv2.imread(clean_path, cv2.IMREAD_GRAYSCALE)
 
-def load_ct_dataloader(root_path, dataset_type, batch_size, steps, use_cache=True):
-    print(dataset_type)
-    base_dataset = load_dataset("/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662/new_clean", "/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662/new_noisy", dataset_type)
+        noisy_image = noisy_image.astype(np.float32) / 255.0
+        clean_image = clean_image.astype(np.float32) / 255.0
     
-    if use_cache:
-        ct_dataset = CT_Inverse_Cached(base_dataset, step_size=steps, cache_dir=f"./cache_{dataset_type}")
-    else:
-        # Use precomputed version for smaller datasets
-        ct_dataset = CT_Inverse_Precomputed(base_dataset, step_size=steps)
+        noisy_tensor = torch.tensor(noisy_image, dtype=torch.float32)
+        clean_tensor = torch.tensor(clean_image, dtype=torch.float32)
+
+        return noisy_tensor.unsqueeze(0), clean_tensor.unsqueeze(0)
+
+
+def create_dataset_splits(noisy_path: str, clean_path: str, transform: Optional[Callable] = None):
+    """
+    Create train, test, calibrate, and validate dataset splits
     
+    Returns:
+        Dictionary containing all four dataset splits
+    """
+    return {
+        'train': PairedImageDataset(noisy_path, clean_path, 'train', transform=transform),
+        'test': PairedImageDataset(noisy_path, clean_path, 'test', transform=transform),
+        'calibrate': PairedImageDataset(noisy_path, clean_path, 'calibrate', transform=transform),
+        'validate': PairedImageDataset(noisy_path, clean_path, 'validate', transform=transform)
+    }
+
+def load_ct_dataloader_two(root_path, dataset_type, batch_size, steps):
+    clean_path = root_path + "/new_clean"
+    noisy_path = root_path + "/new_noisy"
+
+    ct_dataset = PairedImageDataset(
+        noisy_path, 
+        clean_path, 
+        dataset_type
+    )
     dataloader = DataLoader(
         ct_dataset, 
         batch_size=batch_size, 
         num_workers=4  # Increased num_workers for better performance
     )
     return dataloader
+
+# Example usage:
+if __name__ == "__main__":
+    # Define transforms
+  
+    # Create dataset splits
+    datasets = create_dataset_splits(
+        noisy_path="path/to/noisy/images",
+        clean_path="path/to/clean/images", 
+        transform=transform
+    )
+    
+    # Create dataloaders
+    train_loader = DataLoader(datasets['train'], batch_size=4, shuffle=True)
+    test_loader = DataLoader(datasets['test'], batch_size=4, shuffle=False)
+    calib_loader = DataLoader(datasets['calibrate'], batch_size=4, shuffle=False)
+    valid_loader = DataLoader(datasets['validate'], batch_size=4, shuffle=False)
