@@ -9,7 +9,7 @@ source activate qutcc
 ```
 
 ## Data Processing:
-We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. Once downloaded and processed, please proceed to the training portion.  
+We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. When loading data, make sure that the path ``` /path/to/your/data ``` in the training bash scripts correctly points to your data. Once downloaded and processed, please proceed to the training portion.  
 
 **Available Tasks:**
 - [MRI dataset](#fastmri-dataset)

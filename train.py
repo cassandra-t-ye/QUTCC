@@ -40,7 +40,7 @@ plt.switch_backend('agg')
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Quantile UQNet')
     parser.add_argument('--exp-name', type=str, help='experiment name', required=True)
-    parser.add_argument('--exp-dir', type=str, default="/share/monakhova/Cassandra_data/UQNet_proj/experiments", help='directory to save output of experiments')
+    parser.add_argument('--exp-dir', type=str, help='directory to save output of experiments')
     parser.add_argument('--data-root', type=str, help='directory to dataset root', required=True)
     parser.add_argument('--experiment-type', type=str, choices=["MRI", 
                                                                 "Denoising", 
