@@ -24,7 +24,6 @@ from datasets.fmd.data_loader import (fluore_to_tensor,
 from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
 
-from datasets.LidcIdri import load_ct_dataloader
 from datasets.LidcIdri import load_ct_dataloader_two
 
 from models.pinball import BatchedPinballLoss, PinballLoss
