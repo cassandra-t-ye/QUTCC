@@ -9,7 +9,6 @@ else
 fi
 
 conda activate qutcc
->>>>>>> Stashed changes
 
 export TMPDIR=/tmp
 export XDG_RUNTIME_DIR=/tmp

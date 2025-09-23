@@ -6,7 +6,7 @@
 #SBATCH -t 48:00:00                           # Time limit (hh:mm:ss)
 #SBATCH --mem 64gb                            # Memory requirement
 
-source scripts/setup.sh
+source training/setup.sh
 
 python -u train.py \
     --net unet_quantile \
