@@ -23,7 +23,6 @@ from datasets.fmd.data_loader import (fluore_to_tensor,
                                                 load_noisy_all_loaders)
 from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
-from datasets.motionblur import get_motionblur_dataloaders
 
 from datasets.LidcIdri import load_ct_dataloader
 from datasets.LidcIdri import load_ct_dataloader_two
@@ -210,36 +209,6 @@ def get_dataloaders(args, transform):
         json.dump(calib_indices.tolist(), open(args.run_dir + "/calib_indices.json", 'w'), indent=4)
         json.dump(test_indices.tolist(), open(args.run_dir + "/test_indices.json", 'w'), indent=4)
         print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)} | Test dataset size: {len(test_indices)}")
-    elif args.experiment_type == "Lensless":
-        train_loader, test_loader, calib_indices = get_diffusercam_dataloaders(
-            data_root=args.data_root,
-            batch_size=args.batch_size,
-            validation_split=0.1,
-            calib_split=0.2,
-            transform=transform,
-            normalization='min-max',
-            num_workers=4,
-        )
-        json.dump(calib_indices.tolist(), open(args.run_dir + "/calib_indices.json", 'w'), indent=4)
-        print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)}")
-    elif args.experiment_type == "Motionblur":
-        train_loader, test_loader, calib_indices, test_indices = get_motionblur_dataloaders(
-            data_root=args.data_root,
-            batch_size=args.batch_size,
-            n_blur_samples=args.n_blur_samples,
-            kernel_min=args.kernel_min,
-            kernel_max=args.kernel_max,
-            intensity=args.intensity,
-            validation_split=0.1,
-            calib_split=0.2,
-            test_split=0.1,
-            transform=transform,
-            normalization='min-max',
-            num_workers=4,
-        )
-        [print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)} | Test dataset size: {len(test_indices)}")]
-        json.dump(calib_indices.tolist(), open(args.run_dir + "/calib_indices.json", 'w'), indent=4)
-        json.dump(test_indices.tolist(), open(args.run_dir + "/test_indices.json", 'w'), indent=4)
 
     elif args.experiment_type == "CT":
         train_loader = load_ct_dataloader_two(
