@@ -219,7 +219,7 @@ class CalibrateModelTask(submitit.helpers.Checkpointable):
 
 class CalibrationManager:
     def __init__(self, experiment_type: str, info: Dict, calib_subset: int = 2000,
-                 partition: str, timeout_min: int = 120, logs_dir: str,
+                 partition: str = "gpu", timeout_min: int = 120, logs_dir: str,
                  ignore_checkpoints: bool = False):
         self.experiment_type = experiment_type
         self.info = info
