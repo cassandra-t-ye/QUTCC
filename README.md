@@ -8,7 +8,7 @@ conda env create -f environment.yml
 source activate qutcc
 ```
 
-## Data Processing
+## Data Processing:
 We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. Once downloaded and processed, please proceed to the training portion.  
 
 **Available Tasks:**
@@ -47,6 +47,12 @@ python datasets/Lidcldri/data_processing.py -d [path/to/lidcldri/dataset]
 ### QPI Dataset
 * Download the [BSCCM Dataset](https://github.com/Waller-Lab/BSCCM), following the instructions from the repo. 
 
-## Training
+## Training:
+We've included Slurm training scripts for all the tasks in the QUTCC/training folder. To train our model, run
+
+```
+sbatch training/[task of interest]
+```
+In the script, be sure to specify your GPU partition and data-root.
 
 ## Evaluation
