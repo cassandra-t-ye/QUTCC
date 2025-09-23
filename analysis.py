@@ -106,10 +106,12 @@ BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
                      "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-09-17-10.49.15",
                      "unet_im2im_epoch": 20,
                      "data_root": ROOT + "/CT_Scan",
+                     "test_data_path": ROOT + "/CT_Scan/manifest-1600709154662",
                      "in_channels": 1,
                      "batch_size": 16,
                      "experiments_folder": ROOT + "/experiments",
-                     "end_epoch": 50}
+                     "end_epoch": 50,
+                     "steps": 800}
             }
 
 def run(tasks: List[str] = None,
