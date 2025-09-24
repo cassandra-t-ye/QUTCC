@@ -104,7 +104,7 @@ def load_checkpoint_for_training(checkpoint_path: str, model: nn.Module,
 
 def load_checkpoint_for_inference(net: str, in_channels: int, experiment_type: str, run_folder_root: str, 
                                   epoch: int, device: str = "cuda", 
-                                  experiments_folder: str = "/share/monakhova/Cassandra_data/UQNet_proj/experiments"
+                                  experiments_folder: str = ""
                                   ) -> Tuple[nn.Module, str]:
     """Loads a model and its run folder path for inference/analysis."""
     run_folder = Path(experiments_folder) / experiment_type / run_folder_root

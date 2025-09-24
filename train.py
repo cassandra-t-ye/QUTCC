@@ -24,7 +24,7 @@ from datasets.fmd.data_loader import (fluore_to_tensor,
 from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
 
-from datasets.LidcIdri import load_ct_dataloader_two
+from datasets.LidcIdri import load_ct_dataloader
 
 from models.pinball import BatchedPinballLoss, PinballLoss
 from utils import load_yaml, mkdirs, module_size
@@ -210,14 +210,14 @@ def get_dataloaders(args, transform):
         print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)} | Test dataset size: {len(test_indices)}")
 
     elif args.experiment_type == "CT":
-        train_loader = load_ct_dataloader_two(
+        train_loader = load_ct_dataloader(
             root_path=args.data_root,
             dataset_type = "train",
             batch_size = args.batch_size,
             steps = args.ct_step_size
         )
 
-        test_loader = load_ct_dataloader_two(
+        test_loader = load_ct_dataloader(
             root_path=args.data_root,
             dataset_type = "test",
             batch_size = args.batch_size,

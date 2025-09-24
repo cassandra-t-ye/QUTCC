@@ -126,7 +126,7 @@ def create_dataset_splits(noisy_path: str, clean_path: str, transform: Optional[
         'validate': PairedImageDataset(noisy_path, clean_path, 'validate', transform=transform)
     }
 
-def load_ct_dataloader_two(root_path, dataset_type, batch_size, steps):
+def load_ct_dataloader(root_path, dataset_type, batch_size, steps):
     clean_path = root_path + "/new_clean"
     noisy_path = root_path + "/new_noisy"
 

@@ -20,7 +20,7 @@ from datasets.fmd.data_loader import (load_noisy_single_loader,
 from typing import Any, Callable, Literal
 from datasets.diffusercam import get_diffusercam_calib, get_diffusercam_test
 from datasets.fastmri import FastMRIDataset
-from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader_two
+from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader
 
 from models.checkpointing import load_checkpoint_for_inference
 from evaluation import (
@@ -68,7 +68,7 @@ def get_test_dataloader(experiment_type, info, net=Literal['im2im', 'quantile'],
         test_dataloader = load_real_noise_loader(noisy_path=noisy_pathway, gt_path=gt_pathway, batch_size=int(info["batch_size"] * batch_size_multiplier))
 
     elif experiment_type == "CT":
-        test_dataloader = load_ct_dataloader_two(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
+        test_dataloader = load_ct_dataloader(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
 
 
     print(f"Test dataset size: {len(test_dataloader.dataset)}")

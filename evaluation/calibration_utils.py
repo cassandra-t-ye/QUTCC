@@ -16,7 +16,7 @@ from datasets.fastmri import FastMRIDataset
 from datasets.bsccm import get_bsccm_calib, get_bsccm_test
 from datasets.fmd.data_loader import (load_noisy_single_loader,
                                                 load_real_noise_loader)
-from datasets.LidcIdri import load_ct_dataloader_two
+from datasets.LidcIdri import load_ct_dataloader
 
 from evaluation import get_test_intervals_missed
 from evaluation.calibration import (compute_optimal_lambdas,
@@ -56,7 +56,7 @@ def get_calib_dataloader(experiment_type: str, info: Dict[str, Any], net: Litera
         calib_dataset = loader.dataset
 
     elif experiment_type == "CT":
-        loader = load_ct_dataloader_two(root_path="/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662",
+        loader = load_ct_dataloader(root_path=info["test_data_path"],
                             dataset_type = "calibrate",
                             batch_size = 16,
                             steps = 800)
@@ -101,7 +101,7 @@ def get_test_dataloader(experiment_type: str, info: Dict[str, Any], net: Literal
                                         batch_size=batch_size, shuffle=False)
         test_dataset = loader.dataset     
     elif experiment_type == "CT":
-        loader = load_ct_dataloader_two(root_path="/share/monakhova/Cassandra_data/UQNet_proj/CT_Scan/manifest-1600709154662",
+        loader = load_ct_dataloader(info["test_data_path"],
                             dataset_type = "validate",
                             batch_size = 16,
                             steps = 800)
@@ -225,8 +225,8 @@ class CalibrationManager:
         self.info = info
         self.calib_subset = calib_subset
         self.ignore_checkpoints = ignore_checkpoints
-        self.executor = create_local_executor(partition, timeout_min, logs_dir, job_name=f"{experiment_type}-calibration")
-    
+        self.executor = create_local_executor(partition, logs_dir, timeout_min, job_name=f"{experiment_type}-calibration")
+        
     def calibrate(self, net_type: Literal['im2im', 'unet_im2im', "quantile"], 
                   epoch: Optional[int] = None) -> Dict[str, Any]:
         if epoch is None:

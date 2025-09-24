@@ -29,8 +29,6 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 ROOT = "/path/to/data/here"
-
-
 BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
                           "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.51.54",
                           "im2im_epoch": 35,

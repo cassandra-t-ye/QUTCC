@@ -119,17 +119,11 @@ def _create_and_save_plot(epoch_list: List[int], mean_diff_list: List[float],
     plt.close()
 
 if __name__ == "__main__":
-    # experiments_to_run = ['gaussian', 'mri', 'motionblur']
-    # experiments_to_run = ['poisson', 'real_noise_mice', 'real_noise_bpae']
-    # experiments_to_run = ['qpi']
-    # experiments_to_run = ['poisson']
-    # experiments_to_run = ['real_noise_mice']
-    experiments_to_run = ['real_noise_bpae']
+    #Choose which experiments you want to run: "mri", "qpi", "CT", "gaussian", "poisson", "real_noise_mice"
+    experiments_to_run = ['CT']
 
-
-    # experiments_to_run = list(BEST_RUNS.keys())
-    
-    model_types_to_run = ['unet_im2im', 'quantile']
+    #Choose which models you want to calibrate: 'unet_quantile', 'unet_im2im', 'im2im'
+    model_types_to_run = ['im2im']
 
     all_run_results = {}
     for experiment in experiments_to_run:
@@ -141,7 +135,7 @@ if __name__ == "__main__":
                 calib_subset=500,
                 test_subset=1000,
                 intervals_subset=200_000,
-                partition="gpu",
+                partition="gpu",           #Choose which gpu partition you want to calibrate on
                 ignore_checkpoints=True
             )
 
