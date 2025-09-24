@@ -5,19 +5,19 @@ from pathlib import Path
 from tqdm import tqdm
 import argparse
 
-def move_files(src_folder, dest_folder, start_num=0, end_num=None, random_selection=False):
+def copy_files(src_folder, dest_folder, start_num=0, end_num=None, random_selection=False):
     """
-    Move a specific number of files from source folder to destination folder with progress bar.
+    Copy a specific number of files from source folder to destination folder with progress bar.
     
     Args:
         src_folder (str): Path to source folder containing files
         dest_folder (str): Path to destination folder (will be created if it doesn't exist)
-        start_num (int, optional): Starting index for files to move. Defaults to 0.
-        end_num (int, optional): Ending index for files to move. If None, moves all files from start_num. Defaults to None.
+        start_num (int, optional): Starting index for files to copy. Defaults to 0.
+        end_num (int, optional): Ending index for files to copy. If None, copies all files from start_num. Defaults to None.
         random_selection (bool, optional): Whether to randomly select files. Defaults to False.
     
     Returns:
-        int: Number of files moved
+        int: Number of files copied
     """
     # Convert to Path objects
     src_path = Path(src_folder)
@@ -50,22 +50,22 @@ def move_files(src_folder, dest_folder, start_num=0, end_num=None, random_select
     if start_num >= len(files):
         raise ValueError(f"Start index {start_num} is greater than the number of files ({len(files)})")
     
-    # Get the files to move
-    files_to_move = files[start_num:end_num]
-    total_files = len(files_to_move)
+    # Get the files to copy
+    files_to_copy = files[start_num:end_num]
+    total_files = len(files_to_copy)
     
-    # Move the files with progress bar
+    # Copy the files with progress bar
     count = 0
     
     # Create a progress bar
-    with tqdm(total=total_files, desc=f"Moving files to {dest_path.name}", unit="file") as pbar:
-        for file in files_to_move:
+    with tqdm(total=total_files, desc=f"Copying files to {dest_path.name}", unit="file") as pbar:
+        for file in files_to_copy:
             dest_file = dest_path / file.name
-            shutil.move(file, dest_file)
+            shutil.copy2(file, dest_file)  # copy2 preserves metadata
             count += 1
             pbar.update(1)  # Update progress bar
     
-    print(f"Successfully moved {count} files to {dest_path}")
+    print(f"Successfully copied {count} files to {dest_path}")
     return count
 
 if __name__ == "__main__":
@@ -74,12 +74,17 @@ if __name__ == "__main__":
                        help='Path to the dataset file')
     
     args = parser.parse_args()
-    dataset_path = args.dataset
+    dataset_path = Path(args.dataset)
 
-    train = os.path.join(dataset_path, "training") 
-    calibrate = os.path.join(dataset_path, "calibration")
-    validate = os.path.join(dataset_path, "validation")
+    parent_dir = dataset_path.parent
+    train = parent_dir / "training"
+    calibrate = parent_dir / "calibration"
+    validate = parent_dir / "validation"
 
-    move_files(dataset_path, train, start_num=0, end_num=700, random_selection=False)
-    move_files(dataset_path, calibrate, start_num=700, end_num=900, random_selection=False)
-    move_files(dataset_path, validate, start_num=900, end_num=973, random_selection=False)
+    copy_files(dataset_path, train, start_num=0, end_num=10, random_selection=False)
+    copy_files(dataset_path, calibrate, start_num=10, end_num=20, random_selection=False)
+    copy_files(dataset_path, validate, start_num=20, end_num=30, random_selection=False)
+    
+    # copy_files(dataset_path, train, start_num=0, end_num=700, random_selection=False)
+    # copy_files(dataset_path, calibrate, start_num=700, end_num=900, random_selection=False)
+    # copy_files(dataset_path, validate, start_num=900, end_num=973, random_selection=False)
