@@ -21,7 +21,6 @@ import models
 from datasets.bsccm import get_bsccm_dataloaders
 from datasets.fmd.data_loader import (fluore_to_tensor,
                                                 load_noisy_all_loaders)
-from datasets.diffusercam import get_diffusercam_dataloaders
 from datasets.fastmri import FastMRIDataset
 
 from datasets.LidcIdri import load_ct_dataloader
@@ -153,7 +152,6 @@ def get_transform(args):
         raise ValueError(f"Unknown transform: {args.transform}")
     
 def get_dataloaders(args, transform):
-    # TODO: Add more dataloaders for phase retrieval, lensless imaging, TEI
     if args.experiment_type == "MRI": # TODO: Handle this in a more generic way
         input_path = args.data_root + "/training"
         mask_info = {'type': 'equispaced', 'center_fraction': [0.08], 'acceleration': [4]}
@@ -168,7 +166,7 @@ def get_dataloaders(args, transform):
         print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)}")
     
     elif args.experiment_type == "Denoising":
-        if args.noise_type == "real": #IF THE NOISE IS REAL NOISE
+        if args.noise_type == "real":
             gt_pathway = args.data_root + "/real_noise_new/train/gt"
             noisy_pathway = args.data_root + "/real_noise_new/train/noisy"
 
@@ -181,7 +179,7 @@ def get_dataloaders(args, transform):
                 noisy_path = noisy_pathway,
                 transform=transform)
             
-        else:  #IF THE NOISE IS SYNTHETIC GAUSSIAN/POISSON NOISE
+        else: 
             input_path = args.data_root + "/training"
             train_loader, test_loader = load_noisy_all_loaders(
                 noise_type=args.noise_type, 
