@@ -24,12 +24,26 @@ from evaluation.calibration_utils import (CalibrationManager,
                                           AnalysisManager)
 from utils import _prepare_for_json, json_converter, print_memory_stats
 
+from datasets.fastmri import FastMRIDataset
+import datasets.fastmri.utils as fastmri_utils
+from torch.utils.data import TensorDataset, DataLoader
+from datasets.fmd.data_loader import (load_noisy_single_loader,
+                                                load_real_noise_loader)
+from typing import Any, Callable, Literal
+from datasets.fastmri import FastMRIDataset
+from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader_two
+from datasets.bsccm import get_bsccm_calib, get_bsccm_test
+
+from torchmetrics import StructuralSimilarityIndexMeasure
+from torchmetrics.image import PeakSignalNoiseRatio
+import lpips
+
+
 random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
 
 ROOT = "/path/to/data/here"
-
 
 BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
                           "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.51.54",
@@ -454,6 +468,239 @@ def create_violin_plot(all_df: pd.DataFrame, summary: Dict[str, Dict], save_dir:
     violin_plot_path = save_dir / "interval_length_split_violin_all_tasks.png"
     fig.savefig(violin_plot_path, dpi=300, bbox_inches="tight")
     print("Saved split violin plot to:", violin_plot_path)
+
+def get_test_dataloader(experiment_type, info, net=Literal['im2im', 'quantile'], batch_size_multiplier=0.5, test_subset=200):
+    if experiment_type == "mri":
+        mask_info = {'type': 'equispaced', 'center_fraction' : [0.08], 'acceleration' : [4]}
+        test_dataset = FastMRIDataset(info["test_data_path"], normalize_input='standard', normalize_output='min-max', 
+                                      mask_info=mask_info, num_volumes=20)
+        fastmri_utils.normalize_dataset(test_dataset)
+        test_dataloader = DataLoader(test_dataset, batch_size=int(info["batch_size"] * batch_size_multiplier), 
+                                     shuffle=False, num_workers=1, pin_memory=False)
+    
+    elif experiment_type in ["gaussian", "poisson"]:
+        noise_type, min_noise, max_noise, num_noise = experiment_type, info["min_noise"], info["max_noise"], info["num_noise"]
+        test_dataloader = load_noisy_single_loader(noise_type, min_noise, max_noise, num_noise, 
+                                                   image_folder=info["test_data_path"], 
+                                                   batch_size=int(info["batch_size"] * batch_size_multiplier),
+                                                   types=None, transform=None)
+    
+    elif experiment_type == "qpi":
+        run_folder = info["experiments_folder"] + f"/{experiment_type}/{info[f'{net}_root']}"
+        test_indices_path = run_folder + "/test_indices.json"
+        with open(test_indices_path, "r") as f:
+            test_indices = json.load(f)
+        test_dataloader = get_bsccm_test(test_indices[:test_subset], info["data_root"], 
+                                         batch_size=int(info["batch_size"] * batch_size_multiplier), transform=None, 
+                                         normalization='min-max', num_workers=0, pin_memory=False)
+
+    elif experiment_type == "real_noise_mice":
+        gt_pathway = info["test_data_path"] + "/gt"
+        noisy_pathway = info["test_data_path"] + "/noisy"
+        test_dataloader = load_real_noise_loader(noisy_path=noisy_pathway, gt_path=gt_pathway, batch_size=int(info["batch_size"] * batch_size_multiplier))
+
+    elif experiment_type == "CT":
+        test_dataloader = load_ct_dataloader_two(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
+
+
+    print(f"Test dataset size: {len(test_dataloader.dataset)}")
+    return test_dataloader
+
+# rewritten by ChatGPT for clarity
+def calculate_statistics(
+    task: str,
+    seed: int = 1,
+    device: torch.device | None = None,
+    test_subset: int = 2000,
+    batch_size_multiplier: float = 0.7,
+    show_progress: bool = True,
+    return_raw: bool = False,
+):
+    """
+    Run evaluation for a given task (matches keys in BEST_RUNS).
+
+    Returns:
+        results (dict): Nested dict with mean/std for MSE, SSIM, PSNR, LPIPS
+                        for im2im, QUTCC (quantile), and im2im_deep.
+        (optionally) raw (dict of tensors): Per-sample metric tensors if return_raw=True.
+    """
+    # ── Setup ──────────────────────────────────────────────────────────────────────
+    torch.manual_seed(seed)
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+
+    # ── Load models ───────────────────────────────────────────────────────────────
+    im2im_model_desc = "im2im"
+    im2im_model, _ = load_checkpoint_for_inference(
+        net="im2im",
+        in_channels=BEST_RUNS[task]["in_channels"],
+        experiment_type=BEST_RUNS[task]["experiment_type"],
+        run_folder_root=BEST_RUNS[task][f"{im2im_model_desc}_root"],
+        epoch=BEST_RUNS[task][f"{im2im_model_desc}_epoch"],
+        device=device,
+    )
+
+    quant_model, _ = load_checkpoint_for_inference(
+        net="unet_quantile",
+        in_channels=BEST_RUNS[task]["in_channels"],
+        experiment_type=BEST_RUNS[task]["experiment_type"],
+        run_folder_root=BEST_RUNS[task]["quantile_root"],
+        epoch=BEST_RUNS[task]["quantile_epoch"],
+        device=device,
+    )
+
+    unet_im2im_model, _ = load_checkpoint_for_inference(
+        net="unet_im2im",
+        in_channels=BEST_RUNS[task]["in_channels"],
+        experiment_type=BEST_RUNS[task]["experiment_type"],
+        run_folder_root=BEST_RUNS[task]["unet_im2im_root"],
+        epoch=BEST_RUNS[task]["unet_im2im_epoch"],
+        device=device,
+    )
+
+    # ── Dataloader & metrics ──────────────────────────────────────────────────────
+    dataloader = get_test_dataloader(
+        task, BEST_RUNS[task], net="quantile",
+        batch_size_multiplier=batch_size_multiplier,
+        test_subset=test_subset,
+    )
+
+    batch_mse = torch.nn.MSELoss(reduction="none")
+    ssim_metric = StructuralSimilarityIndexMeasure(data_range=1.0, reduction="none").to(device)
+    psnr_metric = PeakSignalNoiseRatio(data_range=1.0, reduction="none", dim=(1, 2, 3)).to(device)
+    lpips_metric = lpips.LPIPS(net="vgg").to(device)
+
+    im2im_mse_acc, im2im_ssim_acc, im2im_psnr_acc, im2im_lpips_acc = [], [], [], []
+    quantile_mse_acc, quantile_ssim_acc, quantile_psnr_acc, quantile_lpips_acc = [], [], [], []
+    unet_im2im_mse_acc, unet_im2im_ssim_acc, unet_im2im_psnr_acc, unet_im2im_lpips_acc = [], [], [], []
+
+    iterator = tqdm(dataloader) if show_progress else dataloader
+
+    # ── Loop ──────────────────────────────────────────────────────────────────────
+    with torch.no_grad():
+        for batch in iterator:
+            noisy, clean = batch
+            clean_im2im = clean[:, 0, :, :].to(device)  # (kept from your code)
+            clean = clean.to(device)
+
+            # Im2Im
+            curr_denoised_lam = im2im_model(noisy.to(device))
+            im2im_output = torch.unsqueeze(curr_denoised_lam[:, 1, :, :], 1)
+            im2im_clean = clean
+
+            out = batch_mse(im2im_output, im2im_clean).view(im2im_output.size(0), -1).mean(dim=1)
+            im2im_mse_acc.append(out)
+            im2im_ssim_acc.append(ssim_metric(im2im_output, im2im_clean).view(im2im_output.size(0), -1).mean(dim=1))
+            im2im_psnr_acc.append(psnr_metric(im2im_output, im2im_clean).view(im2im_output.size(0), -1).mean(dim=1))
+
+            # LPIPS expects [-1,1] RGB
+            im2im_in  = (im2im_output.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            clean_in  = (im2im_clean.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            im2im_lpips_acc.append(lpips_metric(im2im_in, clean_in))
+
+            # Quantile (QUTCC @ q=0.5)
+            q_prediction = torch.tensor([0.5], device=device, dtype=torch.float32)
+            quantile_output = quant_model(noisy.to(device), q_prediction)
+            quantile_clean = clean
+
+            out = batch_mse(quantile_clean, quantile_output).view(quantile_clean.size(0), -1).mean(dim=1)
+            quantile_mse_acc.append(out)
+            quantile_ssim_acc.append(ssim_metric(quantile_output, quantile_clean).view(quantile_output.size(0), -1).mean(dim=1))
+            quantile_psnr_acc.append(psnr_metric(quantile_output, quantile_clean).view(quantile_output.size(0), -1).mean(dim=1))
+
+            q_out  = (quantile_output.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            q_clean = (quantile_clean.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            quantile_lpips_acc.append(lpips_metric(q_out, q_clean))
+
+            # U-Net Im2Im (im2im_deep)
+            timevect = torch.full((noisy.shape[0],), 0.5, device=device, dtype=torch.float32)
+            unet_im2im_output = unet_im2im_model(noisy.to(device), timevect)
+            unet_im2im_output = torch.unsqueeze(unet_im2im_output[:, 1, :, :], 1)
+            unet_im2im_clean = clean
+
+            out = batch_mse(unet_im2im_clean, unet_im2im_output).view(unet_im2im_output.size(0), -1).mean(dim=1)
+            unet_im2im_mse_acc.append(out)
+            unet_im2im_ssim_acc.append(ssim_metric(unet_im2im_output, unet_im2im_clean).view(unet_im2im_output.size(0), -1).mean(dim=1))
+            unet_im2im_psnr_acc.append(psnr_metric(unet_im2im_output, unet_im2im_clean).view(unet_im2im_output.size(0), -1).mean(dim=1))
+
+            ui_out  = (unet_im2im_output.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            ui_clean = (unet_im2im_clean.clamp(0,1) * 2.0 - 1.0).expand(-1, 3, -1, -1)
+            unet_im2im_lpips_acc.append(lpips_metric(ui_out, ui_clean))
+
+    # ── Concatenate and summarize ─────────────────────────────────────────────────
+    def _cat(x): return torch.cat(x, dim=0)
+    im2im_mse_acc, im2im_ssim_acc, im2im_psnr_acc, im2im_lpips_acc = map(_cat, [im2im_mse_acc, im2im_ssim_acc, im2im_psnr_acc, im2im_lpips_acc])
+    quantile_mse_acc, quantile_ssim_acc, quantile_psnr_acc, quantile_lpips_acc = map(_cat, [quantile_mse_acc, quantile_ssim_acc, quantile_psnr_acc, quantile_lpips_acc])
+    unet_im2im_mse_acc, unet_im2im_ssim_acc, unet_im2im_psnr_acc, unet_im2im_lpips_acc = map(_cat, [unet_im2im_mse_acc, unet_im2im_ssim_acc, unet_im2im_psnr_acc, unet_im2im_lpips_acc])
+
+    print(f"im2im_uq MSE: {im2im_mse_acc.mean().item():.7f} +/- {im2im_mse_acc.std().item():.7f}")
+    print(f"im2im_uq SSIM: {im2im_ssim_acc.mean().item():.3f} +/- {im2im_ssim_acc.std().item():.3f}")
+    print(f"im2im_uq PSNR: {im2im_psnr_acc.mean().item():.3f} +/- {im2im_psnr_acc.std().item():.3f}")
+    print(f"im2im_uq LPIPS: {im2im_lpips_acc.mean().item():.3f} +/- {im2im_lpips_acc.std().item():.3f}")
+
+    print(f"QUTCC MSE: {quantile_mse_acc.mean().item():.7f} +/- {quantile_mse_acc.std().item():.7f}")
+    print(f"QUTCC SSIM: {quantile_ssim_acc.mean().item():.3f} +/- {quantile_ssim_acc.std().item():.3f}")
+    print(f"QUTCC PSNR: {quantile_psnr_acc.mean().item():.3f} +/- {quantile_psnr_acc.std().item():.3f}")
+    print(f"QUTCC LPIPS: {quantile_lpips_acc.mean().item():.3f} +/- {quantile_lpips_acc.std().item():.3f}")
+
+    print(f"im2im_deep MSE: {unet_im2im_mse_acc.mean().item():.7f} +/- {unet_im2im_mse_acc.std().item():.7f}")
+    print(f"im2im_deep SSIM: {unet_im2im_ssim_acc.mean().item():.3f} +/- {unet_im2im_ssim_acc.std().item():.3f}")
+    print(f"im2im_deep PSNR: {unet_im2im_psnr_acc.mean().item():.3f} +/- {unet_im2im_psnr_acc.std().item():.3f}")
+    print(f"im2im_deep LPIPS: {unet_im2im_lpips_acc.mean().item():.3f} +/- {unet_im2im_lpips_acc.std().item():.3f}")
+
+    results = {
+        "im2im": {
+            "MSE":   {"mean": im2im_mse_acc.mean().item(),   "std": im2im_mse_acc.std().item()},
+            "SSIM":  {"mean": im2im_ssim_acc.mean().item(),  "std": im2im_ssim_acc.std().item()},
+            "PSNR":  {"mean": im2im_psnr_acc.mean().item(),  "std": im2im_psnr_acc.std().item()},
+            "LPIPS": {"mean": im2im_lpips_acc.mean().item(), "std": im2im_lpips_acc.std().item()},
+        },
+        "QUTCC": {
+            "MSE":   {"mean": quantile_mse_acc.mean().item(),   "std": quantile_mse_acc.std().item()},
+            "SSIM":  {"mean": quantile_ssim_acc.mean().item(),  "std": quantile_ssim_acc.std().item()},
+            "PSNR":  {"mean": quantile_psnr_acc.mean().item(),  "std": quantile_psnr_acc.std().item()},
+            "LPIPS": {"mean": quantile_lpips_acc.mean().item(), "std": quantile_lpips_acc.std().item()},
+        },
+        "im2im_deep": {
+            "MSE":   {"mean": unet_im2im_mse_acc.mean().item(),   "std": unet_im2im_mse_acc.std().item()},
+            "SSIM":  {"mean": unet_im2im_ssim_acc.mean().item(),  "std": unet_im2im_ssim_acc.std().item()},
+            "PSNR":  {"mean": unet_im2im_psnr_acc.mean().item(),  "std": unet_im2im_psnr_acc.std().item()},
+            "LPIPS": {"mean": unet_im2im_lpips_acc.mean().item(), "std": unet_im2im_lpips_acc.std().item()},
+        },
+    }
+
+    if return_raw:
+        raw = {
+            "im2im":        {"MSE": im2im_mse_acc, "SSIM": im2im_ssim_acc, "PSNR": im2im_psnr_acc, "LPIPS": im2im_lpips_acc},
+            "QUTCC":        {"MSE": quantile_mse_acc, "SSIM": quantile_ssim_acc, "PSNR": quantile_psnr_acc, "LPIPS": quantile_lpips_acc},
+            "im2im_deep":   {"MSE": unet_im2im_mse_acc, "SSIM": unet_im2im_ssim_acc, "PSNR": unet_im2im_psnr_acc, "LPIPS": unet_im2im_lpips_acc},
+        }
+        return results, raw
+
+    return results
+
+def check_crossings(experiment_type: str, info: Dict, device: torch.device, 
+                    calib_subset: int = 2000) -> Tuple[int, int]:
+    epoch = info["quantile_epoch"]
+    quantile_model, run_folder = load_checkpoint_for_inference(
+        net="unet_quantile", in_channels=info["in_channels"],
+        experiment_type=experiment_type, run_folder_root=info["quantile_root"],
+        epoch=epoch, device=device, experiments_folder=info["experiments_folder"])
+    
+    analysis_dir = run_folder / "analysis"
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+
+    crossings_dataloader = get_calib_dataloader(experiment_type, info, net="quantile",
+                                                 batch_size_multiplier=0.1, calib_subset=calib_subset)
+    quantiles = torch.arange(0.1, 1.0, 0.1).to(device)
+    crossings_file = analysis_dir / "quantile_crossings.json"
+    crossings_data = manage_checkpoint(crossings_file, check_quantile_crossings,
+                                        dataloader=crossings_dataloader, model=quantile_model, 
+                                        quantiles=quantiles, device=device)
+    violations, total = crossings_data["violations"], crossings_data["total"]
+    del crossings_dataloader
+    return violations, total
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
