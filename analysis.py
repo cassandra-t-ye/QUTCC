@@ -31,7 +31,7 @@ from datasets.fmd.data_loader import (load_noisy_single_loader,
                                                 load_real_noise_loader)
 from typing import Any, Callable, Literal
 from datasets.fastmri import FastMRIDataset
-from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader_two
+from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader
 from datasets.bsccm import get_bsccm_calib, get_bsccm_test
 
 from torchmetrics import StructuralSimilarityIndexMeasure
@@ -44,88 +44,22 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 ROOT = "/path/to/data/here"
-BEST_RUNS = {"gaussian": {"experiment_type": "gaussian",
-                          "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.51.54",
-                          "im2im_epoch": 35,
-                        #   "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-01.11.24",
-                          "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-04.33.21",
-                          "unet_im2im_epoch": 15,
-                          "quantile_root": "unet_quantile_epochs50_bs4_2025-05-19-10.11.52",
-                          "quantile_epoch": 20,
-                          "min_noise": 0,
-                          "max_noise": 0.5,
-                          "num_noise": 40,
-                          "calib_data_path": ROOT + "/Denoising_FMD/calibration",
-                          "test_data_path": ROOT + "/Denoising_FMD/validation",
-                          "in_channels": 1,
-                          "batch_size": 20,
-                          "experiments_folder": ROOT + "/experiments"},
-            "poisson": {"experiment_type": "poisson",
-                        "im2im_root": "im2im_epochs50_bs16_2025-07-05-22.52.03",
-                        "im2im_epoch": 44,
-                        "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-06-29-21.40.35",
-                        "unet_im2im_epoch": 10,
-                        "quantile_root": "unet_quantile_epochs50_bs4_2025-06-29-20.06.00",
-                        "quantile_epoch": 35,
-                        "min_noise": 50,
-                        "max_noise": 100,
-                        "num_noise": 40,
-                        "calib_data_path": ROOT + "/Denoising_FMD/calibration",
-                        "test_data_path": ROOT + "/Denoising_FMD/validation",
-                        "in_channels": 1,
-                        "batch_size": 20,
-                        "experiments_folder": ROOT + "/experiments"},              
-            "real_noise_mice": {"experiment_type": "real_noise",
-                                "im2im_root": "im2im_epochs100_bs4_2025-07-05-22.51.09_mice",
-                                "im2im_epoch": 35,
-                          "unet_im2im_root": "unet_im2im_epochs100_bs4_2025-06-26-20.30.31_mice",
-                          "unet_im2im_epoch": 5,
-                          "quantile_root": "unet_quantile_epochs100_bs4_2025-06-26-20.30.31_mice",
-                          "quantile_epoch": 10,
-                          "calib_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_MICE/calib_MICE",
-                          "test_data_path": ROOT + "/Denoising_FMD/real_noise_new/calib_Confocal_MICE/val_MICE",
-                          "in_channels": 1,
-                          "batch_size": 20,
-                          "experiments_folder": ROOT + "/experiments"},
-             "mri": {"experiment_type": "mri",
-                     "im2im_root": "im2im_epochs50_bs32_2025-07-05-22.51.39",
-                     "im2im_epoch": 35,
-                     "unet_im2im_root": "unet_im2im_epochs50_bs12_2025-06-26-23.16.13",
-                     "unet_im2im_epoch": 25,
-                     "quantile_root": "unet_quantile_epochs50_bs12_2025-06-26-22.00.04",
-                     "quantile_epoch": 30,
-                     "calib_data_path": ROOT + "/Fast_MRI/RAW_singlecoil_train/calibration",
-                     "test_data_path": ROOT + "/Fast_MRI/RAW_singlecoil_train/validation",
-                     "in_channels": 1,
-                     "batch_size": 32,
-                     "experiments_folder": ROOT + "/experiments"},
-             "qpi": {"experiment_type": "qpi",
-                     "im2im_root": "im2im_epochs50_bs72_2025-09-11-14.29.04",
-                     "im2im_epoch": 15,
-                     "unet_im2im_root": "unet_im2im_epochs50_bs72_2025-08-26-11.10.34",
-                     "unet_im2im_epoch": 15,
-                     "quantile_root": "unet_quantile_epochs50_bs72_2025-08-26-11.10.45",
-                     "quantile_epoch": 20,
-                     "data_root": ROOT + "/bsccm",
-                     "in_channels": 2,
-                     "batch_size": 16,
-                     "experiments_folder": ROOT + "/experiments",
-                     "end_epoch": 25},
-            "CT": {"experiment_type": "CT",
-                    "im2im_root": "im2im_epochs50_bs4_2025-09-17-10.49.16",
-                    "im2im_epoch": 35,
-                    "quantile_root": "unet_quantile_epochs50_bs4_2025-09-17-10.47.41",
-                     "quantile_epoch": 35,
-                     "unet_im2im_root": "unet_im2im_epochs50_bs4_2025-09-17-10.49.15",
-                     "unet_im2im_epoch": 20,
-                     "data_root": ROOT + "/CT_Scan",
-                     "test_data_path": ROOT + "/CT_Scan/manifest-1600709154662",
-                     "in_channels": 1,
-                     "batch_size": 16,
-                     "experiments_folder": ROOT + "/experiments",
-                     "end_epoch": 50,
-                     "steps": 800}
-            }
+
+with open(Path(__file__).parent / "best_runs.json", "r") as f:
+    BEST_RUNS = json.load(f)
+
+# Replace placeholder "ROOT/" with the actual ROOT
+def inject_root(d):
+    for k, v in d.items():
+        if isinstance(v, str) and v.startswith("ROOT/"):
+            d[k] = v.replace("ROOT", ROOT, 1)
+        elif isinstance(v, dict):
+            inject_root(v)
+
+inject_root(BEST_RUNS)
+
+print(BEST_RUNS)
+1/0
 
 def run(tasks: List[str] = None,
         calib_subset: int = 2000,
@@ -499,7 +433,7 @@ def get_test_dataloader(experiment_type, info, net=Literal['im2im', 'quantile'],
         test_dataloader = load_real_noise_loader(noisy_path=noisy_pathway, gt_path=gt_pathway, batch_size=int(info["batch_size"] * batch_size_multiplier))
 
     elif experiment_type == "CT":
-        test_dataloader = load_ct_dataloader_two(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
+        test_dataloader = load_ct_dataloader(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
 
 
     print(f"Test dataset size: {len(test_dataloader.dataset)}")
