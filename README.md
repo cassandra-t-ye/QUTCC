@@ -8,8 +8,15 @@ conda env create -f environment.yml
 source activate qutcc
 ```
 
+## Training + Evaluation:
+We break the training and evaluation section into separate parts. 
+1. [Data Processing](#data-processing) - Download and preprocess datasets for 5 different inverse imaging tasks
+2. [Training](#training) - Train QUTCC models using provided Slurm scripts for each task
+3. [Calibration](#calibration) - Calibrate trained models to achieve desired coverage levels
+4. [Evaluation](#evaluation) - Evaluate model performance and generate uncertainty metrics
+   
 ## Data Processing:
-We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. When loading data, make sure that the path ``` /path/to/your/data ``` in the training bash scripts correctly points to your data. Once downloaded and processed, please proceed to the training portion.  
+We evaluate QUTCC on 5 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. When loading data, make sure that the path ``` /path/to/your/data ``` in the training bash scripts correctly points to your data. Once downloaded and processed, please proceed to the training portion.  
 
 **Available Tasks:**
 - [MRI dataset](#fastmri-dataset)
@@ -59,19 +66,16 @@ python -u train.py \
 ```
 
 ## Calibration:
-To calibrate your model, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
-
+To calibrate your model on **one alpha value**, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
 Then go to ```calibration_sweep.py``` and do the following. 
 1. Line 123: Choose which experiment you want to calibrate (can do multiple)
 2. Line 126: Choose which model you want to calibrate (can do multiple)
 3. Line 138: Specify which GPU partition you would like to calibrate on.
+Afterwards, run ```python analysis_sweep.py```. This will sweep through all the model checkpoints you have saved and calibrate them to the specified alpha.
 
-Afterwards, run 
-```
-python analysis_sweep.py
-```
-This will sweep through all the model checkpoints you have saved and calibrate them to the specified alpha.
+The code to produce a **conformalized PDF distribution** can be found in ```evaluation/conformal_pdf_calibration.py```. Before running, be sure to put in the details of your experiment in the lines commented **FILL IN**. The code is currently written to calibrate a gaussian task, but this can be easily switched out for your task of interest. 
 
 
 ## Evaluation
 To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles. 
+
