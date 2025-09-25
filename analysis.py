@@ -31,7 +31,6 @@ from datasets.fmd.data_loader import (load_noisy_single_loader,
                                                 load_real_noise_loader)
 from typing import Any, Callable, Literal
 from datasets.fastmri import FastMRIDataset
-from datasets.LidcIdri.LIDCLDRI import load_ct_dataloader
 from datasets.bsccm import get_bsccm_calib, get_bsccm_test
 
 from torchmetrics import StructuralSimilarityIndexMeasure
@@ -432,10 +431,6 @@ def get_test_dataloader(experiment_type, info, net=Literal['im2im', 'quantile'],
         noisy_pathway = info["test_data_path"] + "/noisy"
         test_dataloader = load_real_noise_loader(noisy_path=noisy_pathway, gt_path=gt_pathway, batch_size=int(info["batch_size"] * batch_size_multiplier))
 
-    elif experiment_type == "CT":
-        test_dataloader = load_ct_dataloader(root_path=info["test_data_path"], dataset_type="test", batch_size = info["batch_size"], steps=info["steps"])
-
-
     print(f"Test dataset size: {len(test_dataloader.dataset)}")
     return test_dataloader
 
@@ -620,7 +615,7 @@ def check_crossings(experiment_type: str, info: Dict, device: torch.device,
         net="unet_quantile", in_channels=info["in_channels"],
         experiment_type=experiment_type, run_folder_root=info["quantile_root"],
         epoch=epoch, device=device, experiments_folder=info["experiments_folder"])
-    
+    run_folder = Path(run_folder)
     analysis_dir = run_folder / "analysis"
     analysis_dir.mkdir(parents=True, exist_ok=True)
 

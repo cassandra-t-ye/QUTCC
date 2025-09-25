@@ -23,8 +23,6 @@ from datasets.fmd.data_loader import (fluore_to_tensor,
                                                 load_noisy_all_loaders)
 from datasets.fastmri import FastMRIDataset
 
-from datasets.LidcIdri import load_ct_dataloader
-
 from models.pinball import BatchedPinballLoss, PinballLoss
 from utils import load_yaml, mkdirs, module_size
 from utils.metrics import cal_psnr, cal_ssim2, cal_lpips
@@ -207,22 +205,6 @@ def get_dataloaders(args, transform):
         json.dump(test_indices.tolist(), open(args.run_dir + "/test_indices.json", 'w'), indent=4)
         print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size: {len(test_loader.dataset)} | Calib dataset size: {len(calib_indices)} | Test dataset size: {len(test_indices)}")
 
-    elif args.experiment_type == "CT":
-        train_loader = load_ct_dataloader(
-            root_path=args.data_root,
-            dataset_type = "train",
-            batch_size = args.batch_size,
-            steps = args.ct_step_size
-        )
-
-        test_loader = load_ct_dataloader(
-            root_path=args.data_root,
-            dataset_type = "test",
-            batch_size = args.batch_size,
-            steps = args.ct_step_size
-        )
-        [print(f"Experiment type: {args.experiment_type} | Train dataset size: {len(train_loader.dataset)} | Test dataset size:{len(test_loader.dataset)}")]
-     
     else:
         raise ValueError(f"Unknown experiment type: {args.experiment_type}")
     

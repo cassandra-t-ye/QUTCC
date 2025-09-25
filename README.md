@@ -44,14 +44,26 @@ python datasets/fmd/data_processing_realnoise.py -d [path/to/fmd/dataset]
 ```
 
 ### QPI Dataset
-* Download the [BSCCM Dataset](https://github.com/Waller-Lab/BSCCM), following the instructions from the repo. 
+* Download the [BSCCM Dataset](https://github.com/Waller-Lab/BSCCM), following the instructions from the repo. Make sure to download the full code repository, not the tiny version. 
 
 ## Training:
-We've included Slurm training scripts for all the tasks in the QUTCC/training folder. To train our model, run
+To train models, use ``train.py`` with the relevant parameters (for learning rate and weight decay, they are already correctly initialized). An example of Gaussian is included below. We recommend running all experiments on GPUs (for all results in the paper, A6000s were used). 
+
 ```
-sbatch training/[task of interest]
+python -u train.py \
+    --net unet_im2im \
+    --transform "center_crop" \
+    --epochs 50 \
+    --experiment-type "Denoising" \
+    --data-root /PATH/TO/DATA/HERE \
+    --in-channels 1 \
+    --noise-type "gaussian" \
+    --sigma 0.5 \
+    --exp-name "gaussian" \
+    --ckpt-freq 5 \
+    --batch-size 4 \
+    --plot-freq 1000
 ```
-In the script, be sure to specify your GPU partition and data-root.
 
 ## Calibration:
 To calibrate your model on **one alpha value**, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
@@ -66,3 +78,4 @@ The code to produce a **conformalized PDF distribution** can be found in ```eval
 
 ## Evaluation
 To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles. 
+
