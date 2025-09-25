@@ -620,7 +620,7 @@ def check_crossings(experiment_type: str, info: Dict, device: torch.device,
         net="unet_quantile", in_channels=info["in_channels"],
         experiment_type=experiment_type, run_folder_root=info["quantile_root"],
         epoch=epoch, device=device, experiments_folder=info["experiments_folder"])
-    
+    run_folder = Path(run_folder)
     analysis_dir = run_folder / "analysis"
     analysis_dir.mkdir(parents=True, exist_ok=True)
 
