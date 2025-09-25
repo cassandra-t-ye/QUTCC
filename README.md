@@ -15,6 +15,7 @@ xz -d qutcc.pth.xz
 xz -d im2im_deep.pth.xz
 ```
 Then go to the provided Jupyter notebook ```quickstart.ipynb``` in the main QUTCC directory and run all code cells. We have provided visualization and PDF figures. 
+Additionally in the ```QUTCC_results``` directory, we've included the individual results, such as the interval length and size-stratified risk from the QUTCC submission. 
 
 ## Data Processing:
 We evaluate QUTCC on 6 different inverse tasks, which we provide support for below. To train your model for a specific task, please follow the instructions for the task you're interested in. When loading data, make sure that the path ``` /path/to/your/data ``` in the training bash scripts correctly points to your data. Once downloaded and processed, please proceed to the training portion.  
