@@ -14,7 +14,6 @@ We evaluate QUTCC on 6 different inverse tasks, which we provide support for bel
 **Available Tasks:**
 - [MRI dataset](#fastmri-dataset)
 - [Gaussian/Poisson/Real Noise Dataset](#gaussianpoissonreal-noise-dataset)
-- [CT dataset](#ct-dataset)
 - [QPI Dataset](#qpi-dataset)
 
 ---
@@ -41,7 +40,7 @@ python datasets/fmd/data_processing_realnoise.py -d [path/to/fmd/dataset]
 * Download the [BSCCM Dataset](https://github.com/Waller-Lab/BSCCM), following the instructions from the repo. Make sure to download the full code repository, not the tiny version. 
 
 ## Training:
-To train models, use ``train.py`` with the relevant parameters (for learning rate and weight decay, they are already correctly initialized). An example of Gaussian is included below. We recommend running all experiments on GPUs (for all results in the paper, A6000s were used).
+To train models, use ``train.py`` with the relevant parameters (for learning rate and weight decay, they are already correctly initialized). An example of Gaussian is included below. We recommend running all experiments on GPUs (for all results in the paper, A6000s were used). 
 
 ```
 python -u train.py \
@@ -75,4 +74,4 @@ This will sweep through all the model checkpoints you have saved and calibrate t
 
 
 ## Evaluation
-To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $\{0.1, 0.2, \dots, 0.9 \}$) in the paper, use ``check_crossings`` with the default quantiles. 
+To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles. 
