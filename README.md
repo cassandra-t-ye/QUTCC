@@ -63,16 +63,15 @@ sbatch training/[task of interest]
 In the script, be sure to specify your GPU partition and data-root.
 
 ## Calibration:
-To calibrate your model, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
+To calibrate your model on **one alpha value**, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
 Then go to ```calibration_sweep.py``` and do the following. 
 1. Line 123: Choose which experiment you want to calibrate (can do multiple)
 2. Line 126: Choose which model you want to calibrate (can do multiple)
 3. Line 138: Specify which GPU partition you would like to calibrate on.
-Afterwards, run 
-```
-python analysis_sweep.py
-```
-This will sweep through all the model checkpoints you have saved and calibrate them to the specified alpha.
+Afterwards, run ```python analysis_sweep.py```. This will sweep through all the model checkpoints you have saved and calibrate them to the specified alpha.
+
+The code to produce a **conformalized PDF distribution** can be found in ```evaluation/conformal_pdf_calibration.py```. Before running, be sure to put in the details of your experiment in the lines commented **FILL IN**. The code is currently written to calibrate a gaussian task, but this can be easily switched out for your task of interest. 
+
 
 ## Evaluation
 [Add your evaluation section content here]
