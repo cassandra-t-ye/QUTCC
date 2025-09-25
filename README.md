@@ -8,15 +8,6 @@ conda env create -f environment.yml
 source activate qutcc
 ```
 
-## Quickstart: 
-We've included two weight checkpoints from Im2Im-Deep and QUTCC in this repo. Go to the QUTCC_eval directory and decompress the weights with the following command. 
-```
-xz -d qutcc.pth.xz
-xz -d im2im_deep.pth.xz
-```
-Then go to the provided Jupyter notebook ```quickstart.ipynb``` in the main QUTCC directory and run all code cells. We have provided visualization and PDF figures. 
-Additionally in the ```QUTCC_eval/QUTCC_results``` directory, we've included the individual results, such as the interval length and size-stratified risk from the QUTCC submission. 
-
 ## Training + Evaluation:
 We break the training and evaluation section into separate parts. 
 1. [Data Processing](#data-processing) - Download and preprocess datasets for 5 different inverse imaging tasks
