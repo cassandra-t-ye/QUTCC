@@ -65,4 +65,4 @@ The code to produce a **conformalized PDF distribution** can be found in ```eval
 
 
 ## Evaluation
-[Add your evaluation section content here]
+To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles. 
