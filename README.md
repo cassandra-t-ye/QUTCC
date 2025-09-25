@@ -15,7 +15,7 @@ xz -d qutcc.pth.xz
 xz -d im2im_deep.pth.xz
 ```
 Then go to the provided Jupyter notebook ```quickstart.ipynb``` in the main QUTCC directory and run all code cells. We have provided visualization and PDF figures. 
-Additionally in the ```QUTCC_results``` directory, we've included the individual results, such as the interval length and size-stratified risk from the QUTCC submission. 
+Additionally in the ```QUTCC_eval/QUTCC_results``` directory, we've included the individual results, such as the interval length and size-stratified risk from the QUTCC submission. 
 
 ## Training + Evaluation:
 We break the training and evaluation section into separate parts. 
