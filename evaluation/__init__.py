@@ -17,6 +17,7 @@ from tqdm import tqdm
 from models.im2im import Im2Im
 from models.im2im.add_uncertainty_im2im import ModelWithUncertainty
 from models.quantile_uqnet import UNetModel
+from evaluation.calibration import quantile_triple_from_model
 
 
 def get_binary_missed(lower_bound: torch.Tensor, upper_bound: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
@@ -158,10 +159,17 @@ def get_risk(dataloader: DataLoader, im2im_model: ModelWithUncertainty, im2im_la
     
     return totals                             
         
-def get_test_intervals_missed(net_type: Literal["im2im", "unet_im2im", "quantile"],
+def get_test_intervals_missed(net_type: Literal["im2im", "unet_im2im", "quantile", "quantile_rcps"],
                               test_dataloader: DataLoader, model: nn.Module,
                               lambda_or_lower_q: float, upper_q: Optional[float] = None,
-                              device: torch.device = torch.device("cuda")) -> Tuple[pd.DataFrame, Dict[str, float]]:
+                              device: torch.device = torch.device("cuda"),
+                              q_lo: float = 0.05, q_mid: float = 0.5, q_hi: float = 0.95
+                              ) -> Tuple[pd.DataFrame, Dict[str, float]]:
+    """
+    For ``net_type="quantile"`` the interval is the quantile net evaluated at the calibrated
+    quantile levels (`lambda_or_lower_q`, `upper_q`). For ``net_type="quantile_rcps"`` it is the
+    net's fixed (`q_lo`, `q_hi`) interval scaled by the RCPS lambda `lambda_or_lower_q`.
+    """
     rows: List[pd.DataFrame] = []
     total = {"missed": 0, "n": 0, "mean_risk": 0, "std_risk": 0}
     per_image_risks: List[float] = []
@@ -191,6 +199,13 @@ def get_test_intervals_missed(net_type: Literal["im2im", "unet_im2im", "quantile
                 noisy = noisy.unsqueeze(0).expand(2, -1, -1, -1, -1).reshape(-1, C, H, W)   # [2 * B, C, H, W]
                 pred = model(noisy, quantiles).view(2, B, 1, H, W).permute(1, 0, 2, 3, 4)   # [B, 2, 1, H, W]
                 lower, upper = pred[:, 0], pred[:, 1]                                       # [B, 1, H, W]
+            elif net_type == "quantile_rcps":
+                lam = lambda_or_lower_q
+                q_lower, pred, q_upper = quantile_triple_from_model(model, noisy, q_lo, q_mid, q_hi, device)
+                lower = pred - lam * (pred - q_lower)                                        # [B, 1, H, W]
+                upper = pred + lam * (q_upper - pred)
+            else:
+                raise ValueError(f"Unknown net_type: {net_type}")
 
             lower, upper = lower.view(B, 1, H, W), upper.view(B, 1, H, W)                   # [B, 1, H, W]
             interval_size = (upper - lower).view(-1)
