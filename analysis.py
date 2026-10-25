@@ -57,9 +57,6 @@ def inject_root(d):
 
 inject_root(BEST_RUNS)
 
-print(BEST_RUNS)
-1/0
-
 def run(tasks: List[str] = None,
         calib_subset: int = 2000,
         test_subset: int = 2000,
