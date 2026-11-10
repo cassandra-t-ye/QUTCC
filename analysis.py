@@ -464,6 +464,7 @@ def calculate_statistics(
         run_folder_root=BEST_RUNS[task][f"{im2im_model_desc}_root"],
         epoch=BEST_RUNS[task][f"{im2im_model_desc}_epoch"],
         device=device,
+        experiments_folder=BEST_RUNS[task]["experiments_folder"],
     )
 
     quant_model, _ = load_checkpoint_for_inference(
@@ -473,6 +474,7 @@ def calculate_statistics(
         run_folder_root=BEST_RUNS[task]["quantile_root"],
         epoch=BEST_RUNS[task]["quantile_epoch"],
         device=device,
+        experiments_folder=BEST_RUNS[task]["experiments_folder"],
     )
 
     unet_im2im_model, _ = load_checkpoint_for_inference(
@@ -482,6 +484,7 @@ def calculate_statistics(
         run_folder_root=BEST_RUNS[task]["unet_im2im_root"],
         epoch=BEST_RUNS[task]["unet_im2im_epoch"],
         device=device,
+        experiments_folder=BEST_RUNS[task]["experiments_folder"],
     )
 
     # ── Dataloader & metrics ──────────────────────────────────────────────────────

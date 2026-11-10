@@ -4,3 +4,6 @@ wandb/
 None/
 .DS_Store
 **/.DS_Store
+/data/
+notebooks/toy_checkpoints/
+notebooks/part2_checkpoint/

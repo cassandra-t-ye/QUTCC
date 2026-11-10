@@ -45,10 +45,20 @@ def create_model(net: str, device: str, in_channels: int = 1, out_channels: int 
         
     return model
 
+def _migrate_state_dict(state_dict: dict) -> dict:
+    # Checkpoints saved before dropout was moved out of ResBlock.out_layers (into
+    # post_residual_dropout) have the zero-initialized conv at out_layers.3; current
+    # ResBlock places it at out_layers.2. Remap silently so old checkpoints still load.
+    return {
+        (k.replace("out_layers.3.", "out_layers.2.") if "out_layers.3." in k else k): v
+        for k, v in state_dict.items()
+    }
+
 def load_model_state(model: nn.Module, ckpt_path: str, device: str) -> nn.Module:
     """Loads a model's state dictionary from a checkpoint."""
     checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
-    model.load_state_dict(checkpoint['model_state_dict'], strict = False) #PUT IN HERE TO DEBUG CT
+    state_dict = _migrate_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(state_dict, strict=False)
     print(f"Model state loaded from {ckpt_path}")
     return model
 
@@ -89,7 +99,7 @@ def load_checkpoint_for_training(checkpoint_path: str, model: nn.Module,
     print(f"Loading checkpoint from {checkpoint_path}")
     try:
         checkpoint = torch.load(checkpoint_path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(_migrate_state_dict(checkpoint['model_state_dict']))
         if optimizer and 'optimizer_state_dict' in checkpoint:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             

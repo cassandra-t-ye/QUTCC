@@ -119,8 +119,8 @@ def _create_and_save_plot(epoch_list: List[int], mean_diff_list: List[float],
     plt.close()
 
 if __name__ == "__main__":
-    #Choose which experiments you want to run: "mri", "qpi", "CT", "gaussian", "poisson", "real_noise_mice"
-    experiments_to_run = ['CT']
+    #Choose which experiments you want to run: "mri", "qpi", "gaussian", "poisson", "real_noise_mice"
+    experiments_to_run = ['gaussian']
 
     #Choose which models you want to calibrate: 'unet_quantile', 'unet_im2im', 'im2im'
     model_types_to_run = ['im2im']

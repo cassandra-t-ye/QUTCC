@@ -62,7 +62,7 @@ if __name__ == "__main__":
     sample_folders = [f for f in os.listdir(dataset_path)]
     training, calibration, validation = getting_ground_truth(dataset_path, sample_folders)
 
-    create_folder(dataset_path, training, "github_test_training")
-    create_folder(dataset_path, calibration, "github_test_calibration")
-    create_folder(dataset_path, validation, "github_test_validation")
+    create_folder(dataset_path, training, os.path.join(dataset_path, "training"))
+    create_folder(dataset_path, calibration, os.path.join(dataset_path, "calibration"))
+    create_folder(dataset_path, validation, os.path.join(dataset_path, "validation"))
         

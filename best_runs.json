@@ -74,5 +74,5 @@
     "batch_size": 16,
     "experiments_folder": "ROOT/experiments",
     "end_epoch": 25
-  },
+  }
 }

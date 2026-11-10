@@ -196,7 +196,6 @@ class ResBlock(TimestepBlock):
         self.out_layers = nn.Sequential(
             normalization(self.out_channels),
             nn.SiLU(),
-            nn.Dropout(p=dropout),
             zero_module(
                 conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)
             ),
@@ -210,6 +209,8 @@ class ResBlock(TimestepBlock):
             )
         else:
             self.skip_connection = conv_nd(dims, channels, self.out_channels, 1)
+
+        self.post_residual_dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, emb):
         """
@@ -243,7 +244,7 @@ class ResBlock(TimestepBlock):
         else:
             h = h + emb_out
             h = self.out_layers(h)
-        return self.skip_connection(x) + h
+        return self.post_residual_dropout(self.skip_connection(x) + h)
 
 
 class AttentionBlock(nn.Module):

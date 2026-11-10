@@ -102,9 +102,10 @@ def compute_optimal_lambdas(dataloader: DataLoader, model: ModelWithUncertainty,
     
     del all_outputs, all_labels
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
-    
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
     return optimal_lambda.item()
 
 def compute_optimal_lambdas_quantile(dataloader: DataLoader, model: UNetModel, alpha: float,
@@ -161,9 +162,10 @@ def compute_optimal_lambdas_quantile(dataloader: DataLoader, model: UNetModel, a
                 break            
         
     gc.collect()
-    torch.cuda.empty_cache()  
-    torch.cuda.ipc_collect()  
-    
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
     if last_valid_lower is None or last_valid_upper is None:
         print("Warning: No valid bounds found within maximum iterations")
         return {"lower_q": lower_q, "upper_q": upper_q}

@@ -66,7 +66,7 @@ python -u train.py \
 ```
 
 ## Calibration:
-To calibrate your model on **one alpha value**, first go to ```analysis.py``` and fill in BEST_RUNS with the experiment of interest, model, and paths to the saved model checkpoints. 
+To calibrate your model on **one alpha value**, first set ```ROOT``` at the top of ```analysis.py``` to the directory containing your experiments, and fill in ```best_runs.json``` (loaded into ``BEST_RUNS`` by ``analysis.py``) with the experiment of interest, model, and paths to the saved model checkpoints. 
 Then go to ```calibration_sweep.py``` and do the following. 
 1. Line 123: Choose which experiment you want to calibrate (can do multiple)
 2. Line 126: Choose which model you want to calibrate (can do multiple)
@@ -77,5 +77,8 @@ The code to produce a **conformalized PDF distribution** can be found in ```QUTC
 
 
 ## Evaluation
-To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` with all model paths being updated. This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles. 
+To recreate table 2 (image reconstruction errors) in the paper, use ``calculate_statistics`` in ``analysis.py`` (pass the task name matching a key in ``best_runs.json``, with all model paths there updated). This calculates image reconstruction performances over MSE, SSIM, PSNR, and LPIPS. To recreate table 3 (quantile crossings in $[0.1, 0.2, \dots, 0.9 ]$) in the paper, use ``check_crossings`` with the default quantiles.
+
+## Visualizing a Checkpoint
+``notebooks/visualize_checkpoint.ipynb`` loads a trained ``unet_quantile`` checkpoint and runs it on a Gaussian-noise FMD sample to show the Mean of the predictive distribution, the Reconstruction (median, q=0.5), and the per-pixel UQ map (interval width), plus a cell to inspect the full conditional predictive PDF at any pixel coordinate you choose. Set ``CHECKPOINT_PATH`` (a `unet_quantile` checkpoint, e.g. from the [Gaussian](#gaussianpoissonreal-noise-dataset) training run) and ``FMD_IMAGE_DIR`` (a folder of clean FMD images, e.g. the ``validation`` folder from [Data Processing](#gaussianpoissonreal-noise-dataset)) at the top of the notebook before running; it also works in Google Colab. 
 

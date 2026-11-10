@@ -76,15 +76,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dataset_path = Path(args.dataset)
 
-    parent_dir = dataset_path.parent
-    train = parent_dir / "training"
-    calibrate = parent_dir / "calibration"
-    validate = parent_dir / "validation"
+    train = dataset_path / "training"
+    calibrate = dataset_path / "calibration"
+    validate = dataset_path / "validation"
 
-    copy_files(dataset_path, train, start_num=0, end_num=10, random_selection=False)
-    copy_files(dataset_path, calibrate, start_num=10, end_num=20, random_selection=False)
-    copy_files(dataset_path, validate, start_num=20, end_num=30, random_selection=False)
-    
-    # copy_files(dataset_path, train, start_num=0, end_num=700, random_selection=False)
-    # copy_files(dataset_path, calibrate, start_num=700, end_num=900, random_selection=False)
-    # copy_files(dataset_path, validate, start_num=900, end_num=973, random_selection=False)
+    copy_files(dataset_path, train, start_num=0, end_num=700, random_selection=False)
+    copy_files(dataset_path, calibrate, start_num=700, end_num=900, random_selection=False)
+    copy_files(dataset_path, validate, start_num=900, end_num=973, random_selection=False)

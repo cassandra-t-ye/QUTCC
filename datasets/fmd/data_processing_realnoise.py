@@ -54,7 +54,7 @@ def sort_training(base_dir, folders):
     training_raw = list(training_raw)
     training_gt = list(training_gt)
     print(f"Training Dataset = {len(training_raw)} images")
-    create_dataset_folders(base_dir, training_raw, training_gt, "realnoise_train")
+    create_dataset_folders(base_dir, training_raw, training_gt, os.path.join(base_dir, "real_noise_new", "train"))
 
 def sort_calib_valid(base_dir, folders):
     raw_imgs = []
@@ -92,8 +92,8 @@ def sort_calib_valid(base_dir, folders):
     print(f"Calibration Dataset = {len(calibration_raw)} images")
     print(f"Validation Dataset = {len(validation_raw)} images")
 
-    create_dataset_folders(base_dir, calibration_raw, calibration_gt, "realnoise_calib")
-    create_dataset_folders(base_dir, validation_raw, validation_gt, "realnoise_valid")
+    create_dataset_folders(base_dir, calibration_raw, calibration_gt, os.path.join(base_dir, "real_noise_new", "calib"))
+    create_dataset_folders(base_dir, validation_raw, validation_gt, os.path.join(base_dir, "real_noise_new", "valid"))
    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process dataset')
@@ -107,5 +107,5 @@ if __name__ == "__main__":
     training_folders = sorted([folder for folder in sample_folders if folder not in validate_folders])
 
     sort_training(dataset_path, training_folders)
-    sort_calib_valid(dataset_path, validate_folders[0])
+    sort_calib_valid(dataset_path, validate_folders)
         

@@ -37,10 +37,9 @@ def parse_arguments():
     parser.add_argument('--exp-name', type=str, help='experiment name', required=True)
     parser.add_argument('--exp-dir', type=str, help='directory to save output of experiments')
     parser.add_argument('--data-root', type=str, help='directory to dataset root', required=True)
-    parser.add_argument('--experiment-type', type=str, choices=["MRI", 
-                                                                "Denoising", 
-                                                                "QPI", 
-                                                                "CT"], help='experiment type', required=True)
+    parser.add_argument('--experiment-type', type=str, choices=["MRI",
+                                                                "Denoising",
+                                                                "QPI"], help='experiment type', required=True)
 
     #Getting rid of unet, unet_quantile10, unet_ensemble, unet_dropout
     parser.add_argument('--net', type=str, default='unet_quantile', choices=['unet_quantile',
@@ -69,9 +68,7 @@ def parse_arguments():
     parser.add_argument('--noise-levels-test', type=list, default=[1], help='noise levels for testing')
     parser.add_argument('--sigma', type=float, default = 0, help='maximum noise level for training')
 
-    #CT-args
-    parser.add_argument('--ct-step-size', type=int, default=800, help='step size for CT radon transform')
-    # WandB-specific args 
+    # WandB-specific args
     parser.add_argument('--wandb-project', type=str, help='UQ-NET project name')
     parser.add_argument('--wandb-entity', type=str, help='wandb entity (team/user)')
     #Misc-args

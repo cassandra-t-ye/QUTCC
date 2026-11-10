@@ -90,8 +90,9 @@ def check_quantile_crossings(dataloader: DataLoader, model: nn.Module,
 
     del noisy, pred, q
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
     return {"violations": violations, "total": total}
 
@@ -153,10 +154,11 @@ def get_risk(dataloader: DataLoader, im2im_model: ModelWithUncertainty, im2im_la
     del dataloader, noisy, clean, pred, lower, upper, lower_pred, upper_pred
     del missed_bin, missed_bin_q, per_image_missed_counts, per_image_missed_counts_q
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
-    
-    return totals                             
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
+    return totals
         
 def get_test_intervals_missed(net_type: Literal["im2im", "unet_im2im", "quantile"],
                               test_dataloader: DataLoader, model: nn.Module,
@@ -290,7 +292,8 @@ def get_largest_residual_indices(model: UNetModel, dataloader: DataLoader,
 
     del noisy, clean, quantiles, pred, error
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
     return worst_pos, worst_vals.tolist()

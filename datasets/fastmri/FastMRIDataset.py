@@ -2,7 +2,6 @@ import inspect
 import os
 import sys
 
-import pdb
 import random
 import xml.etree.ElementTree as etree
 from pathlib import Path
@@ -151,8 +150,7 @@ class FastMRIDataset(Dataset):
 
 if __name__ == "__main__":
   random.seed(1)
-  path = '/clusterfs/abc/amit/fastmri/knee/singlecoil_train/'
+  path = '/path/to/fastmri/knee/singlecoil_train/'  # <-- EDIT ME
   mask_info = {'type': 'equispaced', 'center_fraction' : [0.08], 'acceleration' : [4]}
   dataset = FastMRIDataset(path, normalize_input='standard', normalize_output = 'min-max', mask_info=mask_info, num_volumes=5)
   utils.normalize_dataset(dataset)
-  pdb.set_trace()
